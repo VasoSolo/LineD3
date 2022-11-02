@@ -205,7 +205,6 @@ export default function LineChart(props: LineChartProps) {
         );
     }
     function zoomedChart(event, d) {
-      // What are the selected boundaries?
       let extent = event.selection;
       console.log("zoomedChart");
       // If no selection, back to initial coordinate. Otherwise, update X axis domain
