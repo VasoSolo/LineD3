@@ -34,22 +34,47 @@ const Styles = styled.div<LineChartStylesProps>`
 `;
 
 export default function LineChart(props: LineChartProps) {
-  let { data, height, width, groupby, metrics, colorScheme } = props;
+  let {
+    data,
+    height,
+    width,
+    groupby,
+    metrics,
+    colorScheme,
+    markerType,
+    markerEnabled,
+    markerSize,
+  } = props;
+  //костыль, чтобы не появлялись скроллы
   height -= 10;
   width -= 10;
+  //
   const padding = {
     left: 40,
-    top: 0,
-    right: 50,
+    top: 10,
+    right: 15,
     bottom: 40,
   };
+
   const widthWithPadding = width - padding.left - padding.right;
   // data.forEach(
   //   (el) => (el.__timestamp = d3.timeFormat("%Y-%m-%d")(el.__timestamp))
   // );
-  console.log("metrics", metrics[0]["label"]);
+  //  console.log("metrics", metrics[0]["label"]);
   const metrica = metrics[0]["label"];
-  const dataGrouped = d3.group(data, (d) => d[groupby[0]]);
+  const dataGrouped = d3.group(data, (d) => {
+    return d[groupby[0]];
+  });
+
+  console.log("dataGrouped", dataGrouped);
+  console.log("dataGrouped.keys()", dataGrouped.keys());
+  console.log("Array.from(dataGrouped)", Array.from(dataGrouped));
+
+  let lineEnable: { [index: string]: boolean } = {};
+  Array.from(dataGrouped.keys()).forEach((item) => {
+    lineEnable[String(item)] = true;
+  });
+  console.log("lineEnable", lineEnable);
 
   const rootElem = createRef<HTMLDivElement>();
 
@@ -58,6 +83,7 @@ export default function LineChart(props: LineChartProps) {
       element.select(".MyChart").remove();
     }
     /////////////////////////////////////////////////////////////////////////////scales
+
     const x = d3
       .scaleTime()
       .domain(
@@ -83,20 +109,26 @@ export default function LineChart(props: LineChartProps) {
       .append("svg")
       .attr("class", "MyChart")
       .attr("width", width)
-      .attr("height", height)
-      .append("g");
-    var canvas = svg.append("g").attr("clip-path", "url(#clip)");
+      .attr("height", height);
+    //.append("g");
+    //var canvas = svg.append("g").attr("clip-path", "url(#clip)");
     let xAxis = svg
       .append("g")
       .attr(
         "transform",
         `translate(${padding.left}, ${height - padding.bottom})`
       )
-      .call(d3.axisBottom(x));
+      .call(d3.axisBottom(x).tickSize(-height));
+
     let yAxis = svg
       .append("g")
       .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
-      .call(d3.axisLeft(y).ticks(10));
+      .call(
+        d3.axisLeft(y).tickSize(-width)
+        // .tickPadding(-15 - width)
+      );
+
+    renderTick();
 
     // Add a clipPath: everything out of this area won't be drawn.
     const clip = svg
@@ -109,33 +141,108 @@ export default function LineChart(props: LineChartProps) {
       .attr("x", padding.left)
       .attr("y", 0);
 
-    // Создаём переменную line: где находятся как линия, так и кисть
-    const lines = canvas.append("g").attr("clip-path", "url(#clip)");
+    // Создаём переменную lines: где находятся как линии, так и кисть
+    //const lines = svg.append("g").attr("clip-path", "url(#clip)");
+    const lines = svg.append("g").attr("clip-path", "url(#clip)");
+    ///////////////////////////////////////////////////////////////////////////////////////////LEGEND
+    // const legendContainer = d3.select(".legend");
+    const legendContainer = svg
+      .append("div.legend")
+      .attr("class", "legendTable")
+      .attr("transform", function (d, i) {
+        return `translate(200,200)`;
+      })
+      .attr("width", 200)
+      .attr("height", 50)
+      .attr("stroke", "black")
+      .attr("fill", "none")
+      .attr("z-index", "100");
+
+    const legends = legendContainer
+      .selectAll("legend-cell")
+      .data(dataGrouped.keys())
+      .enter()
+      .append("g")
+      .attr("class", "legend-cell")
+      .append("rect")
+      .attr("x", 1)
+      .attr("y", 1)
+      .attr("height", 10)
+      .attr("width", 10)
+      .attr("fill", (d) => color(d))
+      .attr("transform", function (d, i) {
+        return `translate(0,${i * 15})`;
+      })
+      .on("click", clickLegendHandler);
+
+    function clickLegendHandler(ev) {
+      lineEnable[ev.path[0]["__data__"]] = !lineEnable[ev.path[0]["__data__"]];
+      drawLines();
+    }
     //////////////////////////////////////////////////////////////////////////paint data
-    dataGrouped.forEach((data, key) => {
-      data.sort(function (a, b) {
-        return +a.__timestamp - +b.__timestamp;
+    drawLines();
+    function drawLines() {
+      const enableddataGrouped = Array.from(dataGrouped).filter(
+        (item, index) => {
+          if (lineEnable[String(item[0])]) {
+            return item;
+          }
+        }
+      );
+      //console.log("enableddataGrouped", enableddataGrouped);
+      svg.selectAll(".line").remove();
+      svg.selectAll(".marker").remove();
+      enableddataGrouped.forEach((data, key) => {
+        const lineId = String(data[0]);
+        const lineData = data[1];
+        lineData.sort(function (a, b) {
+          return +a.__timestamp - +b.__timestamp;
+        });
+
+        const line = lines
+          .append("path")
+          .datum(lineData)
+          .attr("class", "line") // I add the class line to be able to modify this line later on.
+          .attr("fill", "none")
+          .attr("id", `line-${lineId}`)
+          .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
+          .attr("stroke", color(lineId))
+          .attr("stroke-width", "2px")
+          .attr(
+            "d",
+            d3
+              .line()
+              .x(function (d) {
+                return x(d["__timestamp"]);
+              })
+              .y(function (d) {
+                return y(d[metrica]);
+              })
+          );
+        if (markerEnabled) {
+          lines
+            .selectAll(".marker-group")
+            .data(lineData)
+            .join("path")
+            .attr("class", "marker")
+            .attr(
+              "d",
+              d3
+                .symbol()
+                .size(+markerSize)
+                .type(d3[markerType])
+            )
+            .attr(
+              "transform",
+              (d) =>
+                `translate(${x(d["__timestamp"]) + padding.left}, ${
+                  y(d[metrica]) - padding.bottom
+                })`
+            )
+            .attr("fill", color(lineId));
+        }
       });
-      lines
-        .append("path")
-        .datum(data)
-        .attr("class", "line") // I add the class line to be able to modify this line later on.
-        .attr("fill", "none")
-        .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
-        .attr("stroke", color(key))
-        .attr("stroke-width", "4px")
-        .attr(
-          "d",
-          d3
-            .line()
-            .x(function (d) {
-              return x(d["__timestamp"]);
-            })
-            .y(function (d) {
-              return y(d[metrica]);
-            })
-        );
-    });
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////ZOOM
     // Add brushing
     const brush = d3
@@ -146,31 +253,8 @@ export default function LineChart(props: LineChartProps) {
       ]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
       .on("end", brushedChart); // Each time the brush selection changes, trigger the 'updateChart' function
 
-    //zoom and pan block
-    // Set the zoom and Pan features: how much you can zoom, on which part, and what to do when there is a zoom
-    let zoom = d3
-      .zoom()
-      .scaleExtent([0.5, 20]) // This control how much you can unzoom (x0.5) and zoom (x20)
-      .translateExtent([
-        [0, 0],
-        [widthWithPadding, height - padding.bottom],
-      ])
-      .on("zoom", zoomedChart);
-
-    // This add an invisible rect on top of the chart area. This rect can recover pointer events: necessary to understand when the user zoom
-    svg
-      .append("rect")
-      .attr("width", width)
-      .attr("height", height)
-      .style("fill", "none")
-      .style("pointer-events", "all")
-      .attr("transform", `translate(${padding.left},${padding.top})`)
-      .call(zoom);
-
-    // now the user can zoom and it will trigger the function called updateChart
-
     // Add the brushing
-    //lines.append("g").attr("class", "brush").call(brush);
+    lines.append("g").attr("class", "brush").call(brush);
 
     // A function that set idleTimeOut to null
     let idleTimeout;
@@ -180,7 +264,6 @@ export default function LineChart(props: LineChartProps) {
     function brushedChart(event, d) {
       // What are the selected boundaries?
       let extent = event.selection;
-      console.log("brushedChart");
       // If no selection, back to initial coordinate. Otherwise, update X axis domain
       if (!extent) {
         if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
@@ -190,7 +273,9 @@ export default function LineChart(props: LineChartProps) {
       }
 
       // Update axis and line position
-      xAxis.transition().call(d3.axisBottom(x));
+      xAxis.transition().call(d3.axisBottom(x).tickSize(-height));
+
+      renderTick();
       lines
         .selectAll(".line")
         .transition()
@@ -203,65 +288,64 @@ export default function LineChart(props: LineChartProps) {
               return y(d[metrica]);
             })
         );
+      lines
+        .selectAll(".marker")
+        .transition()
+        .attr(
+          "transform",
+          (d) =>
+            `translate(${x(d["__timestamp"]) + padding.left}, ${
+              y(d[metrica]) - padding.bottom
+            })`
+        );
     }
-    function zoomedChart(event, d) {
-      let extent = event.selection;
-      console.log("zoomedChart");
-      // If no selection, back to initial coordinate. Otherwise, update X axis domain
-      if (!extent) {
-        //if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
-      } else {
-        x.domain([x.invert(extent[0]), x.invert(extent[1])]);
-        lines.select(".brush").call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
-      }
 
-      // recover the new scale
-      var newX = event.transform.rescaleX(x);
-      //var newY = event.transform.rescaleY(y);
+    svg.on("dblclick", function () {
+      x.domain(
+        d3.extent(data, function (d) {
+          return d.__timestamp;
+        })
+      );
+      xAxis
+        .transition()
+        .duration(1000)
+        .call(d3.axisBottom(x).tickSize(-height));
 
-      // // update axes with these new boundaries
-      // xAxis.call(d3.axisBottom(newX));
-      // yAxis.call(d3.axisLeft(newY));
-
-      // Update axis and line position
-      xAxis.transition().call(d3.axisBottom(newX));
-      //yAxis.transition().call(d3.axisLeft(newY));
+      renderTick();
       lines
         .selectAll(".line")
         .transition()
+        .duration(1000)
         .attr(
           "d",
           d3
             .line()
-            .x((d) => newX(d["__timestamp"]))
+            .x(function (d) {
+              return x(d["__timestamp"]);
+            })
             .y(function (d) {
               return y(d[metrica]);
             })
         );
+      lines
+        .selectAll(".marker")
+        .transition()
+        .duration(1000)
+        .attr(
+          "transform",
+          (d) =>
+            `translate(${x(d["__timestamp"]) + padding.left}, ${
+              y(d[metrica]) - padding.bottom
+            })`
+        );
+    });
+
+    function renderTick() {
+      d3.selectAll(".tick").attr(
+        "style",
+        "stroke-opacity: 0.3; stroke-dasharray: 1, 2;stroke-width: 1;"
+      );
     }
-    // svg.on("dblclick", function () {
-    //   x.domain(
-    //     d3.extent(data, function (d) {
-    //       return d.__timestamp;
-    //     })
-    //   );
-    //   xAxis.transition().duration(1000).call(d3.axisBottom(x));
-    //   lines
-    //     .selectAll(".line")
-    //     .transition()
-    //     .duration(1000)
-    //     .attr(
-    //       "d",
-    //       d3
-    //         .line()
-    //         .x(function (d) {
-    //           return x(d["__timestamp"]);
-    //         })
-    //         .y(function (d) {
-    //           return y(d[metrica]);
-    //         })
-    //     );
-    // });
   }
 
   // Often, you just want to get a hold of the DOM and go nuts.

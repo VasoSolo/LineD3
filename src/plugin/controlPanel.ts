@@ -18,7 +18,8 @@
  */
 import { t, validateNonEmpty } from '@superset-ui/core';
 import { ControlPanelConfig, sections, sharedControls } from '@superset-ui/chart-controls';
-
+const markerEnabled = true
+const markerSize = 30
 const config: ControlPanelConfig = {
   /**
    * The control panel is split into two tabs: "Query" and
@@ -95,6 +96,7 @@ const config: ControlPanelConfig = {
    */
 
   // For control input types, see: superset-frontend/src/explore/components/controls/index.js
+  
   controlPanelSections: [
     sections.legacyTimeseriesTime,
     {
@@ -155,6 +157,61 @@ const config: ControlPanelConfig = {
             name: 'color_scheme',
             config: {...sharedControls.color_scheme,
               label: t('Цветовые схемы'),
+            },
+          },
+        ],
+        
+      ],
+    },
+    {
+      label: t('Маркеры'),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'markerEnabled',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Маркер'),
+              renderTrigger: true,
+              default: markerEnabled,
+              
+            },
+          },
+        ],
+        [
+          {
+            name: 'markerType',
+            config: {
+              type: 'SelectControl',
+              label: t('Вид маркера'),
+              //default: 'В конце',
+              choices: [
+                // [value, label]
+                ["symbolCircle", 'Круг'],
+                ["symbolTriangle", 'Треугольник'],
+                ["symbolSquare", 'Квадрат'],
+              ],
+              renderTrigger: true,
+              visibility: ({ controls }) =>
+                Boolean(controls?.markerEnabled?.value),
+            },
+          },
+        ],[
+          {
+            name: 'markerSize',
+            config: {
+              type: 'SliderControl',
+              label: t('Размер маркера'),
+              renderTrigger: true,
+              min: 0,
+              max: 100,
+              default: markerSize,
+              description: t(
+                'Size of marker. Also applies to forecast observations.',
+              ),
+              visibility: ({ controls }) =>
+                Boolean(controls?.markerEnabled?.value),
             },
           },
         ],

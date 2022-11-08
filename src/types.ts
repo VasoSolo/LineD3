@@ -24,6 +24,9 @@ export interface LineChartStylesProps {
   groupby: string[],
   metrics: Metric[],
   colorScheme: string,
+  markerType: string,
+  markerEnabled: Boolean,
+  markerSize: Number,
   headerFontSize: keyof typeof supersetTheme.typography.sizes;
   boldText: boolean;
 }
