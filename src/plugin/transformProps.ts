@@ -49,7 +49,23 @@ export default function transformProps(chartProps: ChartProps) {
    * be seen until restarting the development server.
    */
   const { width, height, formData, queriesData } = chartProps;
-  const { boldText, headerFontSize, headerText, groupby,metrics,colorScheme,markerType,markerEnabled,markerSize } = formData;
+  const { boldText,
+    headerFontSize,
+    headerText, 
+    groupby,
+    metrics,
+    colorScheme,
+    markerType,
+    markerEnabled,
+    markerSize,
+    legendVertialPosition, 
+    legendHorizontPosition,
+    legendOrientation,
+    legendEnabled,
+    legendFontSize,
+    legendItemPadding,
+    areaMode,
+    lineWidth } = formData;
   const data = queriesData[0].data as TimeseriesDataRecord[];
 
   console.log('formData via TransformProps.ts', formData);
@@ -74,5 +90,13 @@ export default function transformProps(chartProps: ChartProps) {
     markerType,
     markerEnabled,
     markerSize,
+    legendVertialPosition,
+    legendHorizontPosition,
+    legendOrientation,
+    legendEnabled,
+    legendFontSize,
+    legendItemPadding,
+    areaMode,
+    lineWidth
   };
 }

@@ -44,6 +44,14 @@ export default function LineChart(props: LineChartProps) {
     markerType,
     markerEnabled,
     markerSize,
+    legendVertialPosition,
+    legendHorizontPosition,
+    legendOrientation,
+    legendEnabled,
+    legendFontSize,
+    legendItemPadding,
+    areaMode,
+    lineWidth,
   } = props;
   //костыль, чтобы не появлялись скроллы
   height -= 10;
@@ -145,39 +153,82 @@ export default function LineChart(props: LineChartProps) {
     //const lines = svg.append("g").attr("clip-path", "url(#clip)");
     const lines = svg.append("g").attr("clip-path", "url(#clip)");
     ///////////////////////////////////////////////////////////////////////////////////////////LEGEND
-    // const legendContainer = d3.select(".legend");
-    const legendContainer = svg
-      .append("div.legend")
-      .attr("class", "legendTable")
-      .attr("transform", function (d, i) {
-        return `translate(200,200)`;
-      })
-      .attr("width", 200)
-      .attr("height", 50)
-      .attr("stroke", "black")
-      .attr("fill", "none")
-      .attr("z-index", "100");
 
-    const legends = legendContainer
-      .selectAll("legend-cell")
-      .data(dataGrouped.keys())
-      .enter()
-      .append("g")
-      .attr("class", "legend-cell")
-      .append("rect")
-      .attr("x", 1)
-      .attr("y", 1)
-      .attr("height", 10)
-      .attr("width", 10)
-      .attr("fill", (d) => color(d))
-      .attr("transform", function (d, i) {
-        return `translate(0,${i * 15})`;
-      })
-      .on("click", clickLegendHandler);
+    if (legendEnabled) {
+      const legendContainer = svg
+        .append("g")
+        .attr("class", "legendTable")
+        .attr("transform", function (d, i) {
+          return `translate(${
+            (width * legendHorizontPosition) / 100
+          },${(height * legendVertialPosition) / 100})`;
+        });
 
-    function clickLegendHandler(ev) {
-      lineEnable[ev.path[0]["__data__"]] = !lineEnable[ev.path[0]["__data__"]];
-      drawLines();
+      const legendItem = legendContainer
+        .selectAll("legend-item")
+        .data(dataGrouped.keys())
+        .enter()
+        .append("g");
+
+      if (legendOrientation === "legendVertical") {
+        legendItem.attr("transform", function (d, i) {
+          return `translate(0,${i * (legendItemPadding + 16)})`;
+        });
+      } else {
+        legendItem.attr("transform", function (d, i) {
+          return `translate(${i * (legendItemPadding + 100)},0)`;
+        });
+      }
+      // legendItem
+      //   .append("rect")
+      //   .attr("x", 1)
+      //   .attr("y", 0)
+      //   .attr("height", 16)
+      //   .attr("width", 100)
+      //   .attr("style", "cursor: pointer;")
+      //   .attr("class", "legend-rect-fon")
+      //   // .attr("style", "cursor: pointer; opacity: 0.8; stroke: black")
+      //   .attr("fill", "white")
+      //   .on("click", clickLegend);
+      legendItem
+        .append("rect")
+        .attr("x", 1)
+        .attr("y", 0)
+        .attr("height", 16)
+        .attr("width", 16)
+        .attr("class", "legend-rect-color")
+        .attr("style", "cursor: pointer;")
+        .attr("fill", (d) => color(d))
+        .on("click", clickLegend);
+      legendItem
+        .append("text")
+        .attr("x", 20)
+        .attr("y", 8)
+        .attr("class", "legend-text")
+        .attr("style", "cursor: pointer")
+        .text((d) => d)
+        // .text("ldchdjvdsjvln lndf f kenflkdn lkdnfdf dfk dlfk ndlkf")
+        .attr("font-size", legendFontSize)
+        .attr("alignment-baseline", "middle")
+        .on("click", clickLegend);
+
+      function clickLegend(ev) {
+        lineEnable[ev.path[0]["__data__"]] =
+          !lineEnable[ev.path[0]["__data__"]];
+
+        let opacityValue = "0.1";
+        let isnotSelect = true;
+        if (d3.select(ev.path[1]).attr("class") === "select") {
+          opacityValue = "1";
+          isnotSelect = false;
+        }
+
+        d3.select(ev.path[1])
+          .classed("select", isnotSelect)
+          .select(".legend-rect-color")
+          .attr("opacity", opacityValue);
+        drawLines();
+      }
     }
     //////////////////////////////////////////////////////////////////////////paint data
     drawLines();
@@ -203,12 +254,47 @@ export default function LineChart(props: LineChartProps) {
           .append("path")
           .datum(lineData)
           .attr("class", "line") // I add the class line to be able to modify this line later on.
+          //.attr("fill", color(lineId))
           .attr("fill", "none")
+          .attr("fill-opacity", "0.2")
+          // .attr("opacity", 0.2)
           .attr("id", `line-${lineId}`)
           .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
           .attr("stroke", color(lineId))
-          .attr("stroke-width", "2px")
-          .attr(
+          .attr("stroke-width", lineWidth);
+        // .attr("style", "stroke-dasharray:0 150;")
+        // .attr("style", "stroke-linecap: round;")
+        // .attr("stroke-linejoin", "round")
+        // .attr("style", "strokeDashoffset:0;")
+        //
+        // .attr(
+        //   "d",
+        //   d3
+        //     .area()
+        //     .x(function (d) {
+        //       return x(d["__timestamp"]);
+        //     })
+        //     .y0(y(0))
+        //     .y1(function (d) {
+        //       return y(d[metrica]);
+        //     })
+        // );
+
+        if (areaMode) {
+          line.attr("fill", color(lineId)).attr(
+            "d",
+            d3
+              .area()
+              .x(function (d) {
+                return x(d["__timestamp"]);
+              })
+              .y0(y(0))
+              .y1(function (d) {
+                return y(d[metrica]);
+              })
+          );
+        } else {
+          line.attr(
             "d",
             d3
               .line()
@@ -219,19 +305,22 @@ export default function LineChart(props: LineChartProps) {
                 return y(d[metrica]);
               })
           );
+        }
+
+        //);
+
+        // d3.selectAll(".line")
+        //   .transition()
+        //   .duration(1000)
+        //   .attr("style", "stroke-dasharray:150 0;");
+        // .attr("style", "strokeDashoffset:100");
         if (markerEnabled) {
           lines
             .selectAll(".marker-group")
             .data(lineData)
             .join("path")
             .attr("class", "marker")
-            .attr(
-              "d",
-              d3
-                .symbol()
-                .size(+markerSize)
-                .type(d3[markerType])
-            )
+            .attr("d", d3.symbol().size(markerSize).type(d3[markerType]))
             .attr(
               "transform",
               (d) =>
@@ -268,7 +357,10 @@ export default function LineChart(props: LineChartProps) {
       if (!extent) {
         if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
       } else {
-        x.domain([x.invert(extent[0]), x.invert(extent[1])]);
+        x.domain([
+          x.invert(extent[0] - padding.left),
+          x.invert(extent[1] - padding.left),
+        ]);
         lines.select(".brush").call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
       }
 

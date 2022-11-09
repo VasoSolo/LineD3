@@ -19,6 +19,7 @@
 import { t, validateNonEmpty } from '@superset-ui/core';
 import { ControlPanelConfig, sections, sharedControls } from '@superset-ui/chart-controls';
 const markerEnabled = true
+const legendEnabled = true
 const markerSize = 30
 const config: ControlPanelConfig = {
   /**
@@ -159,8 +160,28 @@ const config: ControlPanelConfig = {
               label: t('Цветовые схемы'),
             },
           },
+          {
+            name: 'lineWidth',
+            config: {
+              type: 'SliderControl',
+              label: t('Толщина линий'),
+              renderTrigger: true,
+              min: 1,
+              max: 10,
+              default: 2,
+            },
+          },
         ],
-        
+        [
+          {
+            name: 'areaMode',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Закрасить площадь'),
+              renderTrigger: true,          
+            },
+          },
+        ],
       ],
     },
     {
@@ -172,10 +193,9 @@ const config: ControlPanelConfig = {
             name: 'markerEnabled',
             config: {
               type: 'CheckboxControl',
-              label: t('Маркер'),
+              label: t('Отображать маркеры'),
               renderTrigger: true,
-              default: markerEnabled,
-              
+              default: markerEnabled,              
             },
           },
         ],
@@ -192,13 +212,12 @@ const config: ControlPanelConfig = {
                 ["symbolTriangle", 'Треугольник'],
                 ["symbolSquare", 'Квадрат'],
               ],
+              default: "symbolCircle",
               renderTrigger: true,
               visibility: ({ controls }) =>
                 Boolean(controls?.markerEnabled?.value),
             },
-          },
-        ],[
-          {
+          },{
             name: 'markerSize',
             config: {
               type: 'SliderControl',
@@ -207,13 +226,97 @@ const config: ControlPanelConfig = {
               min: 0,
               max: 100,
               default: markerSize,
-              description: t(
-                'Size of marker. Also applies to forecast observations.',
-              ),
               visibility: ({ controls }) =>
                 Boolean(controls?.markerEnabled?.value),
             },
           },
+        ],
+      ],
+    },{
+      label: t('Легенда'),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'legendEnabled',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Отображать легенду'),
+              renderTrigger: true,
+              default: legendEnabled,
+              
+            },
+          },
+        ],
+        [
+          {
+            name: 'legendOrientation',
+            config: {
+              type: 'SelectControl',
+              label: t('Вид легенды'),
+              //default: 'В конце',
+              choices: [
+                // [value, label]
+                ["legendVertical", 'Вертикальная'],
+                ["legendHorizontal", 'Горизонтальная'],
+              ],
+              renderTrigger: true,
+              visibility: ({ controls }) =>
+                Boolean(controls?.legendEnabled?.value),
+            },
+          },
+        ],[
+          {
+            name: 'legendHorizontPosition',
+            config: {
+              type: 'SliderControl',
+              label: t('Позиция по горизонтали'),
+              renderTrigger: true,
+              min: 1,
+              max: 100,
+              default: 20,
+              visibility: ({ controls }) =>
+                Boolean(controls?.legendEnabled?.value),
+            },
+          },{
+            name: 'legendVertialPosition',
+            config: {
+              type: 'SliderControl',
+              label: t('Позиция по вертикали'),
+              renderTrigger: true,
+              min: 1,
+              max: 100,
+              default: 20,
+              visibility: ({ controls }) =>
+                Boolean(controls?.legendEnabled?.value),
+            },
+          },
+        ],
+        [
+          {
+            name: 'legendFontSize',
+            config: {
+              type: 'TextControl',
+              default: 12,
+              renderTrigger: true,
+              // ^ this makes it apply instantaneously, without triggering a "run query" button
+              label: t('Шрифт'),
+              visibility: ({ controls }) =>
+                Boolean(controls?.legendEnabled?.value),
+            },
+          },{
+            name: 'legendItemPadding',
+            config: {
+              type: 'SliderControl',
+              label: t('Отступы'),
+              renderTrigger: true,
+              min: 1,
+              max: 150,
+              default: 1,
+              visibility: ({ controls }) =>
+                Boolean(controls?.legendEnabled?.value),
+            },
+          }
         ],
       ],
     },

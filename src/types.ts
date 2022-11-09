@@ -25,8 +25,16 @@ export interface LineChartStylesProps {
   metrics: Metric[],
   colorScheme: string,
   markerType: string,
-  markerEnabled: Boolean,
-  markerSize: Number,
+  markerEnabled: boolean,
+  markerSize: number,
+  legendVertialPosition: number,
+  legendHorizontPosition: number,
+  legendOrientation: string,
+  legendEnabled: boolean,
+  legendFontSize:number,
+  legendItemPadding: number;
+  areaMode:boolean,
+  lineWidth:number,
   headerFontSize: keyof typeof supersetTheme.typography.sizes;
   boldText: boolean;
 }
