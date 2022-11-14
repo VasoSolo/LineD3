@@ -65,7 +65,9 @@ export default function transformProps(chartProps: ChartProps) {
     legendFontSize,
     legendItemPadding,
     areaMode,
-    lineWidth } = formData;
+    lineWidth,
+    tickVertical,
+    tickHorizontal, } = formData;
   const data = queriesData[0].data as TimeseriesDataRecord[];
 
   console.log('formData via TransformProps.ts', formData);
@@ -97,6 +99,8 @@ export default function transformProps(chartProps: ChartProps) {
     legendFontSize,
     legendItemPadding,
     areaMode,
-    lineWidth
+    lineWidth,
+    tickVertical,
+    tickHorizontal,
   };
 }

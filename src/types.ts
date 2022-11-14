@@ -35,6 +35,8 @@ export interface LineChartStylesProps {
   legendItemPadding: number;
   areaMode:boolean,
   lineWidth:number,
+  tickVertical:boolean,
+  tickHorizontal:boolean,
   headerFontSize: keyof typeof supersetTheme.typography.sizes;
   boldText: boolean;
 }

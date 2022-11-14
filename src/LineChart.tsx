@@ -52,6 +52,8 @@ export default function LineChart(props: LineChartProps) {
     legendItemPadding,
     areaMode,
     lineWidth,
+    tickVertical,
+    tickHorizontal,
   } = props;
   //костыль, чтобы не появлялись скроллы
   height -= 10;
@@ -112,7 +114,21 @@ export default function LineChart(props: LineChartProps) {
       .range([height, padding.bottom + padding.top]);
 
     const color = CategoricalColorNamespace.getScale(colorScheme);
+    const gradientColor = function (color) {
+      return;
+      //       background: rgb(0,255,85);
+      // background: linear-gradient(320deg, rgba(0,255,85,1) 0%, rgba(255,255,255,1) 100%);
+    };
     ////////////////////////////////////////////////////////////////////////////////////////canvases
+    const xAxisSetting = d3.axisBottom(x);
+    if (tickVertical) {
+      // xAxisSetting.tickSize(-height).tickSizeOuter(0).tickSizeInner(-100);
+      xAxisSetting.tickSizeInner(-height);
+    }
+    const yAxisSetting = d3.axisLeft(y);
+    if (tickHorizontal) {
+      yAxisSetting.tickSizeInner(-width);
+    }
     let svg = element
       .append("svg")
       .attr("class", "MyChart")
@@ -126,15 +142,12 @@ export default function LineChart(props: LineChartProps) {
         "transform",
         `translate(${padding.left}, ${height - padding.bottom})`
       )
-      .call(d3.axisBottom(x).tickSize(-height));
+      .call(xAxisSetting);
 
     let yAxis = svg
       .append("g")
       .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
-      .call(
-        d3.axisLeft(y).tickSize(-width)
-        // .tickPadding(-15 - width)
-      );
+      .call(yAxisSetting);
 
     renderTick();
 
@@ -179,17 +192,6 @@ export default function LineChart(props: LineChartProps) {
           return `translate(${i * (legendItemPadding + 100)},0)`;
         });
       }
-      // legendItem
-      //   .append("rect")
-      //   .attr("x", 1)
-      //   .attr("y", 0)
-      //   .attr("height", 16)
-      //   .attr("width", 100)
-      //   .attr("style", "cursor: pointer;")
-      //   .attr("class", "legend-rect-fon")
-      //   // .attr("style", "cursor: pointer; opacity: 0.8; stroke: black")
-      //   .attr("fill", "white")
-      //   .on("click", clickLegend);
       legendItem
         .append("rect")
         .attr("x", 1)
@@ -241,60 +243,92 @@ export default function LineChart(props: LineChartProps) {
         }
       );
       //console.log("enableddataGrouped", enableddataGrouped);
+
+      svg.selectAll(".area").remove();
       svg.selectAll(".line").remove();
       svg.selectAll(".marker").remove();
+      let arrayLinesId: string[] = [];
+
+      //закрашиваем площади
+      if (areaMode) {
+        enableddataGrouped.forEach((data, key) => {
+          const lineId = String(data[0]);
+          arrayLinesId.push(lineId);
+          const lineData = data[1];
+          lineData.sort(function (a, b) {
+            return +a.__timestamp - +b.__timestamp;
+          });
+
+          const area = lines
+            .append("path")
+            .datum(lineData)
+            .attr("class", "area") // I add the class line to be able to modify this line later on.
+            .attr("fill", "none")
+            // .attr("fill-opacity", "0.5")
+            // .attr("opacity", 0.2)
+            .attr("id", `area-${lineId}`)
+            .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
+            .attr("stroke-width", 0)
+            .attr(
+              "d",
+              d3
+                .area()
+                .x(function (d) {
+                  return x(d["__timestamp"]);
+                })
+                .y0(height)
+                .y1(function (d) {
+                  return y(d[metrica]);
+                })
+            );
+
+          var lg = lines
+            .append("defs")
+            .append("linearGradient")
+            .attr("id", `mygrad_${lineId}`) //id of the gradient
+            .attr("x1", "0%")
+            .attr("x2", "0%")
+            .attr("y1", "0%")
+            .attr("y2", "100%"); //since its a vertical linear gradient
+          lg.append("stop")
+            .attr("offset", "0%")
+            .style("stop-color", color(lineId))
+            .style("stop-opacity", 0.9);
+
+          lg.append("stop")
+            .attr("offset", "100%")
+            .style("stop-color", "white")
+            .style("stop-opacity", 0.5);
+
+          // line.attr("fill", color(lineId));
+          area.attr("fill", `url(#mygrad_${lineId})`);
+        });
+      }
+
+      //рисуем линии
       enableddataGrouped.forEach((data, key) => {
         const lineId = String(data[0]);
+        arrayLinesId.push(lineId);
         const lineData = data[1];
         lineData.sort(function (a, b) {
           return +a.__timestamp - +b.__timestamp;
         });
 
         const line = lines
+          .append("g")
+          .attr("id", `g-${lineId}`)
           .append("path")
           .datum(lineData)
           .attr("class", "line") // I add the class line to be able to modify this line later on.
           //.attr("fill", color(lineId))
           .attr("fill", "none")
-          .attr("fill-opacity", "0.2")
+          // .attr("fill-opacity", "0.5")
           // .attr("opacity", 0.2)
           .attr("id", `line-${lineId}`)
           .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
           .attr("stroke", color(lineId))
-          .attr("stroke-width", lineWidth);
-        // .attr("style", "stroke-dasharray:0 150;")
-        // .attr("style", "stroke-linecap: round;")
-        // .attr("stroke-linejoin", "round")
-        // .attr("style", "strokeDashoffset:0;")
-        //
-        // .attr(
-        //   "d",
-        //   d3
-        //     .area()
-        //     .x(function (d) {
-        //       return x(d["__timestamp"]);
-        //     })
-        //     .y0(y(0))
-        //     .y1(function (d) {
-        //       return y(d[metrica]);
-        //     })
-        // );
-
-        if (areaMode) {
-          line.attr("fill", color(lineId)).attr(
-            "d",
-            d3
-              .area()
-              .x(function (d) {
-                return x(d["__timestamp"]);
-              })
-              .y0(y(0))
-              .y1(function (d) {
-                return y(d[metrica]);
-              })
-          );
-        } else {
-          line.attr(
+          .attr("stroke-width", lineWidth)
+          .attr(
             "d",
             d3
               .line()
@@ -305,15 +339,7 @@ export default function LineChart(props: LineChartProps) {
                 return y(d[metrica]);
               })
           );
-        }
 
-        //);
-
-        // d3.selectAll(".line")
-        //   .transition()
-        //   .duration(1000)
-        //   .attr("style", "stroke-dasharray:150 0;");
-        // .attr("style", "strokeDashoffset:100");
         if (markerEnabled) {
           lines
             .selectAll(".marker-group")
@@ -331,6 +357,42 @@ export default function LineChart(props: LineChartProps) {
             .attr("fill", color(lineId));
         }
       });
+    }
+
+    function lineOrAreaRender() {
+      if (areaMode) {
+        lines
+          .selectAll(".area")
+          .transition()
+          .duration(1000)
+          .attr(
+            "d",
+            d3
+              .area()
+              .x(function (d) {
+                return x(d["__timestamp"]);
+              })
+              .y0(height)
+              .y1(function (d) {
+                return y(d[metrica]);
+              })
+          );
+      }
+      lines
+        .selectAll(".line")
+        .transition()
+        .duration(1000)
+        .attr(
+          "d",
+          d3
+            .line()
+            .x(function (d) {
+              return x(d["__timestamp"]);
+            })
+            .y(function (d) {
+              return y(d[metrica]);
+            })
+        );
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////ZOOM
     // Add brushing
@@ -365,24 +427,14 @@ export default function LineChart(props: LineChartProps) {
       }
 
       // Update axis and line position
-      xAxis.transition().call(d3.axisBottom(x).tickSize(-height));
+      xAxis.transition().duration(1000).call(xAxisSetting);
 
       renderTick();
-      lines
-        .selectAll(".line")
-        .transition()
-        .attr(
-          "d",
-          d3
-            .line()
-            .x((d) => x(d["__timestamp"]))
-            .y(function (d) {
-              return y(d[metrica]);
-            })
-        );
+      lineOrAreaRender();
       lines
         .selectAll(".marker")
         .transition()
+        .duration(1000)
         .attr(
           "transform",
           (d) =>
@@ -398,27 +450,12 @@ export default function LineChart(props: LineChartProps) {
           return d.__timestamp;
         })
       );
-      xAxis
-        .transition()
-        .duration(1000)
-        .call(d3.axisBottom(x).tickSize(-height));
+      xAxis.transition().duration(1000).call(xAxisSetting);
 
       renderTick();
-      lines
-        .selectAll(".line")
-        .transition()
-        .duration(1000)
-        .attr(
-          "d",
-          d3
-            .line()
-            .x(function (d) {
-              return x(d["__timestamp"]);
-            })
-            .y(function (d) {
-              return y(d[metrica]);
-            })
-        );
+
+      lineOrAreaRender();
+
       lines
         .selectAll(".marker")
         .transition()

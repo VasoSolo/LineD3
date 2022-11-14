@@ -182,6 +182,26 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'tickVertical',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Вертикальная сетка'),
+              default: true,
+              renderTrigger: true,          
+            },
+          },
+          {
+            name: 'tickHorizontal',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Горизонтальная сетка'),
+              default: true,
+              renderTrigger: true,          
+            },
+          },
+        ],
       ],
     },
     {
