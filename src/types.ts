@@ -37,6 +37,12 @@ export interface LineChartStylesProps {
   lineWidth:number,
   tickVertical:boolean,
   tickHorizontal:boolean,
+  gradientArea:boolean,
+  areaOpacity:number,
+  marginBottom:number,
+  marginTop:number,
+  marginLeft:number,
+  marginRight:number,
   headerFontSize: keyof typeof supersetTheme.typography.sizes;
   boldText: boolean;
 }

@@ -104,7 +104,6 @@ const config: ControlPanelConfig = {
       label: t('Запрос'),
       expanded: true,
       controlSetRows: [
-        /* ['groupby'], */
         [
           {
             name: 'groupby',
@@ -153,6 +152,7 @@ const config: ControlPanelConfig = {
       label: t('Визуальные настройки графика'),
       expanded: true,
       controlSetRows: [
+        // ['getColorFormatters'],
         [
           {
             name: 'color_scheme',
@@ -169,16 +169,6 @@ const config: ControlPanelConfig = {
               min: 1,
               max: 10,
               default: 2,
-            },
-          },
-        ],
-        [
-          {
-            name: 'areaMode',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Закрасить площадь'),
-              renderTrigger: true,          
             },
           },
         ],
@@ -202,7 +192,89 @@ const config: ControlPanelConfig = {
             },
           },
         ],
+        [
+          {
+            name: 'areaMode',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Закрасить площадь'),
+              renderTrigger: true,          
+            },
+          },
+        ],
+        [
+          {
+            name: 'gradientArea',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Градиент'),
+              renderTrigger: true,
+              visibility: ({ controls }) =>
+                Boolean(controls?.areaMode?.value),          
+            },
+          },
+          {
+            name: 'areaOpacity',
+            config: {
+              type: 'SliderControl',
+              label: t('Прозрачность'),
+              renderTrigger: true,
+              min: 0,
+              max: 100,
+              default: 50,
+              visibility: ({ controls }) =>
+                Boolean(controls?.areaMode?.value),
+            },
+          },
+        ],
       ],
+    },
+    {
+      label: t('Отступы'),
+      expanded: true,
+      controlSetRows: [[
+        
+        {
+          name: 'marginLeft',
+          config: {
+            type: 'SliderControl',
+            default: 10,
+            renderTrigger: true,
+            label: t('Cлева'),
+            description: t('%'),
+          },
+        },
+        {
+          name: 'marginRight',
+          config: {
+            type: 'SliderControl',
+            default: 2,
+            renderTrigger: true,
+            label: t('Cправа'),
+            description: t('%'),
+          },
+        },
+        {
+          name: 'marginTop',
+          config: {
+            type: 'SliderControl',
+            default: 1,
+            renderTrigger: true,
+            label: t('Cверху'),
+            description: t('%'),
+          },
+        },
+        {
+          name: 'marginBottom',
+          config: {
+            type: 'SliderControl',
+            default: 10,
+            renderTrigger: true,
+            label: t('Cнизу'),
+            description: t('%'),
+          },
+        },
+      ],]
     },
     {
       label: t('Маркеры'),
@@ -237,7 +309,8 @@ const config: ControlPanelConfig = {
               visibility: ({ controls }) =>
                 Boolean(controls?.markerEnabled?.value),
             },
-          },{
+          },
+          {
             name: 'markerSize',
             config: {
               type: 'SliderControl',
@@ -295,6 +368,7 @@ const config: ControlPanelConfig = {
               min: 1,
               max: 100,
               default: 20,
+              description: t('%'),
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
@@ -307,6 +381,7 @@ const config: ControlPanelConfig = {
               min: 1,
               max: 100,
               default: 20,
+              description: t('%'),
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
@@ -328,7 +403,7 @@ const config: ControlPanelConfig = {
             name: 'legendItemPadding',
             config: {
               type: 'SliderControl',
-              label: t('Отступы'),
+              label: t('Отступы между элементами'),
               renderTrigger: true,
               min: 1,
               max: 150,

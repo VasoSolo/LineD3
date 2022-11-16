@@ -1,7 +1,8 @@
 import React, { useEffect, createRef } from "react";
-import { styled, CategoricalColorNamespace } from "@superset-ui/core";
+import { styled, CategoricalColorNamespace, t } from "@superset-ui/core";
 import { LineChartProps, LineChartStylesProps } from "./types";
 import * as d3 from "d3";
+import * as voron from "d3-voronoi";
 
 // The following Styles component is a <div> element, which has been styled using Emotion
 // For docs, visit https://emotion.sh/docs/styled
@@ -54,28 +55,39 @@ export default function LineChart(props: LineChartProps) {
     lineWidth,
     tickVertical,
     tickHorizontal,
+    gradientArea,
+    areaOpacity,
+    marginBottom,
+    marginTop,
+    marginLeft,
+    marginRight,
   } = props;
   //костыль, чтобы не появлялись скроллы
   height -= 10;
   width -= 10;
   //
+  //вычисляем относительные отступы
   const padding = {
-    left: 40,
-    top: 10,
-    right: 15,
-    bottom: 40,
+    left: (width * marginLeft) / 100,
+    top: (height * marginTop) / 100,
+    right: (width * marginRight) / 100,
+    bottom: (height * marginBottom) / 100,
   };
 
+  data.sort(function (a, b) {
+    return +a.__timestamp - +b.__timestamp;
+  });
+
   const widthWithPadding = width - padding.left - padding.right;
-  // data.forEach(
-  //   (el) => (el.__timestamp = d3.timeFormat("%Y-%m-%d")(el.__timestamp))
-  // );
-  //  console.log("metrics", metrics[0]["label"]);
+  const heightWithPadding = height - padding.top - padding.bottom;
+
   const metrica = metrics[0]["label"];
   const dataGrouped = d3.group(data, (d) => {
     return d[groupby[0]];
   });
+  const X = d3.map(data, (d) => d["__timestamp"]);
 
+  console.log("X", X);
   console.log("dataGrouped", dataGrouped);
   console.log("dataGrouped.keys()", dataGrouped.keys());
   console.log("Array.from(dataGrouped)", Array.from(dataGrouped));
@@ -84,7 +96,6 @@ export default function LineChart(props: LineChartProps) {
   Array.from(dataGrouped.keys()).forEach((item) => {
     lineEnable[String(item)] = true;
   });
-  console.log("lineEnable", lineEnable);
 
   const rootElem = createRef<HTMLDivElement>();
 
@@ -92,6 +103,13 @@ export default function LineChart(props: LineChartProps) {
     if (element.select(".MyChart")) {
       element.select(".MyChart").remove();
     }
+
+    let svg = element
+      .append("svg")
+      .attr("class", "MyChart")
+      .attr("width", width)
+      .attr("height", height);
+
     /////////////////////////////////////////////////////////////////////////////scales
 
     const x = d3
@@ -101,7 +119,7 @@ export default function LineChart(props: LineChartProps) {
           return d.__timestamp;
         })
       )
-      .range([0, widthWithPadding]);
+      .range([0, widthWithPadding - 10]);
 
     const y = d3
       .scaleLinear()
@@ -114,28 +132,17 @@ export default function LineChart(props: LineChartProps) {
       .range([height, padding.bottom + padding.top]);
 
     const color = CategoricalColorNamespace.getScale(colorScheme);
-    const gradientColor = function (color) {
-      return;
-      //       background: rgb(0,255,85);
-      // background: linear-gradient(320deg, rgba(0,255,85,1) 0%, rgba(255,255,255,1) 100%);
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////canvases
+
+    ////////////////////////////////////////////////////////////////////////////////////////paint
     const xAxisSetting = d3.axisBottom(x);
     if (tickVertical) {
-      // xAxisSetting.tickSize(-height).tickSizeOuter(0).tickSizeInner(-100);
-      xAxisSetting.tickSizeInner(-height);
+      xAxisSetting.tickSizeInner(-heightWithPadding);
     }
     const yAxisSetting = d3.axisLeft(y);
     if (tickHorizontal) {
-      yAxisSetting.tickSizeInner(-width);
+      yAxisSetting.tickSizeInner(-widthWithPadding);
     }
-    let svg = element
-      .append("svg")
-      .attr("class", "MyChart")
-      .attr("width", width)
-      .attr("height", height);
-    //.append("g");
-    //var canvas = svg.append("g").attr("clip-path", "url(#clip)");
+
     let xAxis = svg
       .append("g")
       .attr(
@@ -159,12 +166,48 @@ export default function LineChart(props: LineChartProps) {
       .append("svg:rect")
       .attr("width", widthWithPadding)
       .attr("height", height)
+      // .attr("height", "100%")
       .attr("x", padding.left)
       .attr("y", 0);
 
     // Создаём переменную lines: где находятся как линии, так и кисть
     //const lines = svg.append("g").attr("clip-path", "url(#clip)");
     const lines = svg.append("g").attr("clip-path", "url(#clip)");
+    // lines.on("mousemove", moveToolTip);
+    lines.on("pointerenter pointermove", moveToolTip);
+    lines.on("pointerleave", hideToolTip);
+    ////////////////////////////////////////////////////////////////////toolTip
+    const toolTipLine = lines
+      .append("line")
+      .attr("x1", 100)
+      .attr("y1", 0)
+      .attr("x2", 100)
+      .attr("y2", heightWithPadding)
+      .attr("stroke-dasharray", "2 4")
+      .attr("stroke-width", 2)
+      .attr("stroke", "black")
+      .attr("opacity", "0.6")
+      .attr("class", "toolTipLine")
+      .attr("id", "toolTipLine")
+      .attr("transform", `translate(0,${padding.top})`);
+
+    function moveToolTip(ev) {
+      // console.log("d3.pointer(ev)[0]", d3.pointer(ev)[0]);
+      // console.log("x.invert(d3.pointer(ev)[0])", x.invert(d3.pointer(ev)[0]));
+
+      //<use xlink:href="#toolTipLine" />
+
+      const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
+      // console.log("X[i]", X[i]);
+      // console.log("x(X[i])", x(X[i]));
+      d3.select(".toolTipLine")
+        .attr("x1", x(X[i]) + padding.left)
+        .attr("x2", x(X[i]) + padding.left)
+        .attr("opacity", "0.6");
+    }
+    function hideToolTip(ev) {
+      d3.select(".toolTipLine").attr("opacity", "0");
+    }
     ///////////////////////////////////////////////////////////////////////////////////////////LEGEND
 
     if (legendEnabled) {
@@ -201,7 +244,8 @@ export default function LineChart(props: LineChartProps) {
         .attr("class", "legend-rect-color")
         .attr("style", "cursor: pointer;")
         .attr("fill", (d) => color(d))
-        .on("click", clickLegend);
+        .on("click", clickLegend)
+        .on("mouseover", hoverPath);
       legendItem
         .append("text")
         .attr("x", 20)
@@ -231,8 +275,13 @@ export default function LineChart(props: LineChartProps) {
           .attr("opacity", opacityValue);
         drawLines();
       }
+
+      function hoverPath(ev) {
+        console.log("ev.path", ev.path);
+      }
     }
     //////////////////////////////////////////////////////////////////////////paint data
+
     drawLines();
     function drawLines() {
       const enableddataGrouped = Array.from(dataGrouped).filter(
@@ -255,17 +304,11 @@ export default function LineChart(props: LineChartProps) {
           const lineId = String(data[0]);
           arrayLinesId.push(lineId);
           const lineData = data[1];
-          lineData.sort(function (a, b) {
-            return +a.__timestamp - +b.__timestamp;
-          });
-
           const area = lines
             .append("path")
             .datum(lineData)
-            .attr("class", "area") // I add the class line to be able to modify this line later on.
+            .attr("class", "area")
             .attr("fill", "none")
-            // .attr("fill-opacity", "0.5")
-            // .attr("opacity", 0.2)
             .attr("id", `area-${lineId}`)
             .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
             .attr("stroke-width", 0)
@@ -293,15 +336,20 @@ export default function LineChart(props: LineChartProps) {
           lg.append("stop")
             .attr("offset", "0%")
             .style("stop-color", color(lineId))
-            .style("stop-opacity", 0.9);
+            .style("stop-opacity", 1);
 
           lg.append("stop")
             .attr("offset", "100%")
             .style("stop-color", "white")
-            .style("stop-opacity", 0.5);
+            .style("stop-opacity", areaOpacity / 100);
 
-          // line.attr("fill", color(lineId));
-          area.attr("fill", `url(#mygrad_${lineId})`);
+          if (gradientArea) {
+            area.attr("fill", `url(#mygrad_${lineId})`);
+          } else {
+            area
+              .attr("fill", color(lineId))
+              .attr("fill-opacity", areaOpacity / 100);
+          }
         });
       }
 
@@ -319,11 +367,8 @@ export default function LineChart(props: LineChartProps) {
           .attr("id", `g-${lineId}`)
           .append("path")
           .datum(lineData)
-          .attr("class", "line") // I add the class line to be able to modify this line later on.
-          //.attr("fill", color(lineId))
+          .attr("class", "line")
           .attr("fill", "none")
-          // .attr("fill-opacity", "0.5")
-          // .attr("opacity", 0.2)
           .attr("id", `line-${lineId}`)
           .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
           .attr("stroke", color(lineId))
@@ -358,7 +403,6 @@ export default function LineChart(props: LineChartProps) {
         }
       });
     }
-
     function lineOrAreaRender() {
       if (areaMode) {
         lines

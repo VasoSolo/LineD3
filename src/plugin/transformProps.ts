@@ -67,7 +67,13 @@ export default function transformProps(chartProps: ChartProps) {
     areaMode,
     lineWidth,
     tickVertical,
-    tickHorizontal, } = formData;
+    tickHorizontal,
+    gradientArea,
+    areaOpacity,
+    marginBottom,
+    marginTop,
+    marginLeft,
+    marginRight, } = formData;
   const data = queriesData[0].data as TimeseriesDataRecord[];
 
   console.log('formData via TransformProps.ts', formData);
@@ -102,5 +108,11 @@ export default function transformProps(chartProps: ChartProps) {
     lineWidth,
     tickVertical,
     tickHorizontal,
+    gradientArea,
+    areaOpacity,
+    marginBottom,
+    marginTop,
+    marginLeft,
+    marginRight,
   };
 }

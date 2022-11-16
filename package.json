@@ -28,7 +28,9 @@
   },
   "dependencies": {
     "@types/d3": "^7.4.0",
-    "d3": "^7.6.1"
+    "@types/d3-voronoi": "^1.1.9",
+    "d3": "^7.6.1",
+    "d3-voronoi": "^1.1.4"
   },
   "peerDependencies": {
     "@superset-ui/chart-controls": "*",
