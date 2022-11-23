@@ -3,6 +3,7 @@ import { styled, CategoricalColorNamespace, t } from "@superset-ui/core";
 import { LineChartProps, LineChartStylesProps } from "./types";
 import * as d3 from "d3";
 import * as voron from "d3-voronoi";
+import { text } from "d3";
 
 // The following Styles component is a <div> element, which has been styled using Emotion
 // For docs, visit https://emotion.sh/docs/styled
@@ -75,7 +76,9 @@ export default function LineChart(props: LineChartProps) {
   };
 
   data.sort(function (a, b) {
-    return +a.__timestamp - +b.__timestamp;
+    const s1 = a.__timestamp === null ? 1 : a.__timestamp;
+    const s2 = b.__timestamp === null ? 1 : b.__timestamp;
+    return +s1 - +s2;
   });
 
   const widthWithPadding = width - padding.left - padding.right;
@@ -85,9 +88,16 @@ export default function LineChart(props: LineChartProps) {
   const dataGrouped = d3.group(data, (d) => {
     return d[groupby[0]];
   });
-  const X = d3.map(data, (d) => d["__timestamp"]);
+  const X = d3.map(data, (d) => {
+    const r = d["__timestamp"] === null ? "" : d["__timestamp"];
+    return r;
+  });
+  const dataTime = d3.group(data, (d) => d["__timestamp"]);
+  let arrayForToolTip: string[][] = [];
 
-  console.log("X", X);
+  // console.log("X", X);
+  // console.log("typeof X[1]", typeof X[1]);
+  console.log("dataTime", dataTime);
   console.log("dataGrouped", dataGrouped);
   console.log("dataGrouped.keys()", dataGrouped.keys());
   console.log("Array.from(dataGrouped)", Array.from(dataGrouped));
@@ -134,11 +144,11 @@ export default function LineChart(props: LineChartProps) {
     const color = CategoricalColorNamespace.getScale(colorScheme);
 
     ////////////////////////////////////////////////////////////////////////////////////////paint
-    const xAxisSetting = d3.axisBottom(x);
+    const xAxisSetting = d3.axisBottom(x).tickPadding(10);
     if (tickVertical) {
       xAxisSetting.tickSizeInner(-heightWithPadding);
     }
-    const yAxisSetting = d3.axisLeft(y);
+    const yAxisSetting = d3.axisLeft(y).tickPadding(10);
     if (tickHorizontal) {
       yAxisSetting.tickSizeInner(-widthWithPadding);
     }
@@ -160,7 +170,7 @@ export default function LineChart(props: LineChartProps) {
 
     // Add a clipPath: everything out of this area won't be drawn.
     const clip = svg
-      .append("defs")
+      // .append("defs")
       .append("svg:clipPath")
       .attr("id", "clip")
       .append("svg:rect")
@@ -174,7 +184,8 @@ export default function LineChart(props: LineChartProps) {
     //const lines = svg.append("g").attr("clip-path", "url(#clip)");
     const lines = svg.append("g").attr("clip-path", "url(#clip)");
     // lines.on("mousemove", moveToolTip);
-    lines.on("pointerenter pointermove", moveToolTip);
+    lines.on("pointerenter", createToolTip);
+    lines.on("pointermove", moveToolTip);
     lines.on("pointerleave", hideToolTip);
     ////////////////////////////////////////////////////////////////////toolTip
     const toolTipLine = lines
@@ -183,30 +194,97 @@ export default function LineChart(props: LineChartProps) {
       .attr("y1", 0)
       .attr("x2", 100)
       .attr("y2", heightWithPadding)
-      .attr("stroke-dasharray", "2 4")
-      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "2")
+      .attr("stroke-width", 1)
       .attr("stroke", "black")
-      .attr("opacity", "0.6")
+      .attr("opacity", "0")
       .attr("class", "toolTipLine")
       .attr("id", "toolTipLine")
       .attr("transform", `translate(0,${padding.top})`);
 
+    // createToolTip();
+
+    function createToolTip() {
+      console.log("createToolTip");
+
+      const toolTipBlock = lines.append("g").attr("class", "toolTipBlock");
+
+      const path = toolTipBlock
+        .selectAll("path")
+        .data([, ,])
+        .join("path")
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("class", "toolTipPath");
+
+      toolTipBlock.append("text").attr("class", "toolTipHeader");
+    }
+
+    const formatYear = d3.timeFormat("%Y");
+
     function moveToolTip(ev) {
-      // console.log("d3.pointer(ev)[0]", d3.pointer(ev)[0]);
-      // console.log("x.invert(d3.pointer(ev)[0])", x.invert(d3.pointer(ev)[0]));
-
-      //<use xlink:href="#toolTipLine" />
-
       const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
-      // console.log("X[i]", X[i]);
-      // console.log("x(X[i])", x(X[i]));
+
       d3.select(".toolTipLine")
         .attr("x1", x(X[i]) + padding.left)
         .attr("x2", x(X[i]) + padding.left)
         .attr("opacity", "0.6");
+      // console.log("X[i]", formatYear(X[i]));
+
+      getArrayForToolTip(X[i]);
+
+      const {
+        // x,
+        // y,
+        width: w,
+        height: h,
+      } = d3.select(".toolTipBlock").node().getBBox();
+
+      d3.select(".toolTipPath").attr(
+        "d",
+        // `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`
+        `M 0 0 h 300 v ${arrayForToolTip.length * 15 + 80} h -300 Z`
+      );
+
+      d3.select(".toolTipBlock")
+        .attr("opacity", "1")
+        .attr(
+          "transform",
+          `translate(${d3.pointer(ev)[0] + 15},${d3.pointer(ev)[1] + 15})`
+        );
+      d3.select(".toolTipHeader").text(X[i]);
+
+      d3.select(".toolTipBlock")
+        .selectAll(".toolTip")
+        .data(arrayForToolTip)
+        .join("text")
+        .attr("class", "toolTip")
+        .attr("transform", (d, i) => `translate(0,${30 + i * 20})`)
+        .text((d) => `${d[0]} - ${d[1]}`);
+
+      // console.log(
+      //   "toolTipBlock.node().getBBox()",
+      //   d3.select(".toolTipBlock").node().getBBox()
+      // );
+      console.log("d3.pointer", d3.pointer(ev));
     }
     function hideToolTip(ev) {
+      // svg.selectAll(".toolTipBlock").remove();
+      svg.select(".toolTipBlock").remove();
+      // svg.selectAll(".toolTip").remove();
+
       d3.select(".toolTipLine").attr("opacity", "0");
+      // d3.select(".toolTip").attr("opacity", "0");
+    }
+
+    function getArrayForToolTip(point) {
+      // console.log("dataTime.get(point)", dataTime.get(point));
+      arrayForToolTip = [];
+      dataTime
+        .get(point)
+        ?.forEach((el) =>
+          arrayForToolTip.push([String(el[groupby[0]]), String(el[metrica])])
+        );
     }
     ///////////////////////////////////////////////////////////////////////////////////////////LEGEND
 
@@ -449,7 +527,7 @@ export default function LineChart(props: LineChartProps) {
       .on("end", brushedChart); // Each time the brush selection changes, trigger the 'updateChart' function
 
     // Add the brushing
-    lines.append("g").attr("class", "brush").call(brush);
+    lines.append("g").attr("class", "brush").attr("id", "brush").call(brush);
 
     // A function that set idleTimeOut to null
     let idleTimeout;

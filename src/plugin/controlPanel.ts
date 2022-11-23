@@ -134,7 +134,7 @@ const config: ControlPanelConfig = {
               label: t('Фильтры'),
               // it's possible to add validators to controls if
               // certain selections/types need to be enforced
-              validators: [validateNonEmpty],
+              // validators: [validateNonEmpty],
             },
           },
         ],

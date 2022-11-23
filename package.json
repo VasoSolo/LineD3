@@ -1,6 +1,6 @@
 {
   "name": "linechart-d3",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "line chart for Superset",
   "sideEffects": false,
   "main": "lib/index.js",
