@@ -106,7 +106,7 @@ export default function LineChart(props: LineChartProps) {
   Array.from(dataGrouped.keys()).forEach((item) => {
     lineEnable[String(item)] = true;
   });
-
+  console.log("lineEnable", lineEnable);
   const rootElem = createRef<HTMLDivElement>();
 
   function createChart(element) {
@@ -187,105 +187,6 @@ export default function LineChart(props: LineChartProps) {
     lines.on("pointerenter", createToolTip);
     lines.on("pointermove", moveToolTip);
     lines.on("pointerleave", hideToolTip);
-    ////////////////////////////////////////////////////////////////////toolTip
-    const toolTipLine = lines
-      .append("line")
-      .attr("x1", 100)
-      .attr("y1", 0)
-      .attr("x2", 100)
-      .attr("y2", heightWithPadding)
-      .attr("stroke-dasharray", "2")
-      .attr("stroke-width", 1)
-      .attr("stroke", "black")
-      .attr("opacity", "0")
-      .attr("class", "toolTipLine")
-      .attr("id", "toolTipLine")
-      .attr("transform", `translate(0,${padding.top})`);
-
-    // createToolTip();
-
-    function createToolTip() {
-      console.log("createToolTip");
-
-      const toolTipBlock = lines.append("g").attr("class", "toolTipBlock");
-
-      const path = toolTipBlock
-        .selectAll("path")
-        .data([, ,])
-        .join("path")
-        .attr("fill", "white")
-        .attr("stroke", "black")
-        .attr("class", "toolTipPath");
-
-      toolTipBlock.append("text").attr("class", "toolTipHeader");
-    }
-
-    const formatYear = d3.timeFormat("%Y");
-
-    function moveToolTip(ev) {
-      const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
-
-      d3.select(".toolTipLine")
-        .attr("x1", x(X[i]) + padding.left)
-        .attr("x2", x(X[i]) + padding.left)
-        .attr("opacity", "0.6");
-      // console.log("X[i]", formatYear(X[i]));
-
-      getArrayForToolTip(X[i]);
-
-      const {
-        // x,
-        // y,
-        width: w,
-        height: h,
-      } = d3.select(".toolTipBlock").node().getBBox();
-
-      d3.select(".toolTipPath").attr(
-        "d",
-        // `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`
-        `M 0 0 h 300 v ${arrayForToolTip.length * 15 + 80} h -300 Z`
-      );
-
-      d3.select(".toolTipBlock")
-        .attr("opacity", "1")
-        .attr(
-          "transform",
-          `translate(${d3.pointer(ev)[0] + 15},${d3.pointer(ev)[1] + 15})`
-        );
-      d3.select(".toolTipHeader").text(X[i]);
-
-      d3.select(".toolTipBlock")
-        .selectAll(".toolTip")
-        .data(arrayForToolTip)
-        .join("text")
-        .attr("class", "toolTip")
-        .attr("transform", (d, i) => `translate(0,${30 + i * 20})`)
-        .text((d) => `${d[0]} - ${d[1]}`);
-
-      // console.log(
-      //   "toolTipBlock.node().getBBox()",
-      //   d3.select(".toolTipBlock").node().getBBox()
-      // );
-      console.log("d3.pointer", d3.pointer(ev));
-    }
-    function hideToolTip(ev) {
-      // svg.selectAll(".toolTipBlock").remove();
-      svg.select(".toolTipBlock").remove();
-      // svg.selectAll(".toolTip").remove();
-
-      d3.select(".toolTipLine").attr("opacity", "0");
-      // d3.select(".toolTip").attr("opacity", "0");
-    }
-
-    function getArrayForToolTip(point) {
-      // console.log("dataTime.get(point)", dataTime.get(point));
-      arrayForToolTip = [];
-      dataTime
-        .get(point)
-        ?.forEach((el) =>
-          arrayForToolTip.push([String(el[groupby[0]]), String(el[metrica])])
-        );
-    }
     ///////////////////////////////////////////////////////////////////////////////////////////LEGEND
 
     if (legendEnabled) {
@@ -358,6 +259,128 @@ export default function LineChart(props: LineChartProps) {
         console.log("ev.path", ev.path);
       }
     }
+    ////////////////////////////////////////////////////////////////////toolTip
+    const toolTipLine = lines
+      .append("line")
+      .attr("x1", 100)
+      .attr("y1", 0)
+      .attr("x2", 100)
+      .attr("y2", heightWithPadding)
+      .attr("stroke-dasharray", "2")
+      .attr("stroke-width", 1)
+      .attr("stroke", "black")
+      .attr("opacity", "0")
+      .attr("class", "toolTipLine")
+      .attr("id", "toolTipLine")
+      .attr("transform", `translate(0,${padding.top})`);
+
+    // createToolTip();
+
+    function createToolTip() {
+      const toolTipBlock = lines.append("g").attr("class", "toolTipBlock");
+
+      const path = toolTipBlock
+        .selectAll("path")
+        .data([, ,])
+        .join("path")
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("class", "toolTipPath");
+
+      toolTipBlock
+        .append("text")
+        .attr("style", "font-weight: bold;")
+        .attr("transform", "translate(8,15)")
+        .attr("class", "toolTipHeader");
+    }
+
+    const formatYear = d3.timeFormat("%Y");
+    const formatMonth = d3.timeFormat("%B");
+    const formatDay = d3.timeFormat("%a %d");
+    const formatDayMonthYear = d3.timeFormat("%d %B %Y");
+    console.log("1");
+
+    function moveToolTip(ev) {
+      const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
+
+      // console.log(`${d3.pointer(ev)} / ${width}`);
+
+      d3.select(".toolTipLine")
+        .attr("x1", x(X[i]) + padding.left)
+        .attr("x2", x(X[i]) + padding.left)
+        .attr("opacity", "0.6");
+      // console.log("X[i]", formatYear(X[i]));
+
+      getArrayForToolTip(X[i]);
+
+      d3.select(".toolTipPath").attr(
+        "d",
+        // `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`
+        `M 0 5 h 140 v ${arrayForToolTip.length * 15 + 80} h -140 Z`
+      );
+
+      d3.select(".toolTipHeader").text(formatDayMonthYear(X[i]));
+
+      d3.select(".toolTipBlock")
+        .selectAll(".toolTip")
+        .data(arrayForToolTip)
+        .join("text")
+        .attr("class", "toolTip")
+        .attr("transform", (d, i) => `translate(5,${35 + i * 20})`)
+        .text((d) => `${d[0]} - ${d[1]}`);
+
+      const { height: heightToolTip } = d3
+        .select(".toolTipBlock")
+        .node()
+        .getBBox();
+      // console.log("heightToolTip", heightToolTip);
+      // console.log(d3.select(".toolTipBlock").node().getBBox());
+      let toolTipHorizontalPosition: number;
+      let toolVertikalPosition: number;
+      if (d3.pointer(ev)[0] > width / 2) {
+        toolTipHorizontalPosition = -155;
+      } else {
+        toolTipHorizontalPosition = 10;
+      }
+      if (d3.pointer(ev)[1] > height / 2) {
+        toolVertikalPosition = -heightToolTip;
+      } else {
+        toolVertikalPosition = 10;
+      }
+      d3.select(".toolTipBlock")
+        .attr("opacity", "1")
+        .attr(
+          "transform",
+          `translate(${d3.pointer(ev)[0] + toolTipHorizontalPosition},${
+            d3.pointer(ev)[1] + toolVertikalPosition
+          })`
+          // `translate(${d3.pointer(ev)[0] - 300},${d3.pointer(ev)[1] + 15})`
+        );
+      // console.log(
+      //   "toolTipBlock.node().getBBox()",
+      //   d3.select(".toolTipBlock").node().getBBox()
+      // );
+    }
+    function hideToolTip(ev) {
+      // svg.selectAll(".toolTipBlock").remove();
+      svg.select(".toolTipBlock").remove();
+      // svg.selectAll(".toolTip").remove();
+
+      d3.select(".toolTipLine").attr("opacity", "0");
+      // d3.select(".toolTip").attr("opacity", "0");
+    }
+
+    function getArrayForToolTip(point) {
+      // console.log("dataTime.get(point)", dataTime.get(point));
+      arrayForToolTip = [];
+      dataTime.get(point)?.forEach((el) => {
+        //if (lineEnable)
+        // console.log("String(el[groupby[0]])", String(el[groupby[0]]));
+        if (lineEnable[String(el[groupby[0]])])
+          arrayForToolTip.push([String(el[groupby[0]]), String(el[metrica])]);
+      });
+    }
+
     //////////////////////////////////////////////////////////////////////////paint data
 
     drawLines();
