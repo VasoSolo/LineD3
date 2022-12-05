@@ -95,10 +95,7 @@ export default function LineChart(props: LineChartProps) {
   });
   const dataTime = d3.group(data, (d) => d["__timestamp"]);
   let arrayForToolTip: string[][] = [];
-  let currentSelection: number[] = [0, widthWithPadding - 10];
 
-  // console.log("X", X);
-  // console.log("typeof X[1]", typeof X[1]);
   console.log("dataTime", dataTime);
   console.log("dataGrouped", dataGrouped);
   console.log("dataGrouped.keys()", dataGrouped.keys());
@@ -145,6 +142,10 @@ export default function LineChart(props: LineChartProps) {
 
     const color = CategoricalColorNamespace.getScale(colorScheme);
 
+    let currentSelection: any[] = [
+      x.invert(0),
+      x.invert(widthWithPadding - 10),
+    ];
     ////////////////////////////////////////////////////////////////////////////////////////paint
     let xAxisSetting = d3.axisBottom(x).tickPadding(10);
     if (tickVertical) {
@@ -249,7 +250,7 @@ export default function LineChart(props: LineChartProps) {
           opacityValue = "1";
           isnotSelect = false;
         }
-        console.log("brush");
+        // console.log("brush");
         d3.select(ev.path[1])
           .classed("select", isnotSelect)
           .select(".legend-rect-color")
@@ -258,24 +259,8 @@ export default function LineChart(props: LineChartProps) {
       }
     }
     function hoverPath(ev) {
-      console.log("ev.path", ev.path);
+      // console.log("ev.path", ev.path);
     }
-    // function renderEnableArray() {
-    //   const enableddataGrouped = Array.from(dataGrouped).filter((item) => {
-    //     let arrayOfEnableValues = [];
-    //     if (lineEnable[String(item[0])]) {
-    //       // console.log("item from dataGrouped in filter", item[1]);
-    //       arrayOfEnableValues.push(...item[1]);
-    //       return item;
-    //     }
-    //     const maxY = d3.max(arrayOfEnableValues, (d) => d[metrica]);
-    //     y.domain([0, maxY]);
-
-    //     yAxis.transition().duration(1000).call(yAxisSetting);
-    //     renderTick();
-    //   });
-    //   return enableddataGrouped;
-    // }
     ////////////////////////////////////////////////////////////////////toolTip
     const toolTipLine = lines
       .append("line")
@@ -315,11 +300,11 @@ export default function LineChart(props: LineChartProps) {
     const formatMonth = d3.timeFormat("%B");
     const formatDay = d3.timeFormat("%a %d");
     const formatDayMonthYear = d3.timeFormat("%d %B %Y");
-    console.log("2");
+    console.log("1");
 
     function moveToolTip(ev) {
       const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
-
+      //console.log(d3.pointer(ev));
       // console.log(`${d3.pointer(ev)} / ${width}`);
 
       d3.select(".toolTipLine")
@@ -330,14 +315,6 @@ export default function LineChart(props: LineChartProps) {
 
       arrayForToolTip = getArrayForToolTip(X[i]);
 
-      d3.select(".toolTipPath").attr(
-        "d",
-        // `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`
-        `M 0 5 h 140 v ${arrayForToolTip.length * 15 + 80} h -140 Z`
-      );
-
-      d3.select(".toolTipHeader").text(formatDayMonthYear(X[i]));
-
       d3.select(".toolTipBlock")
         .selectAll(".toolTip")
         .data(arrayForToolTip)
@@ -346,6 +323,25 @@ export default function LineChart(props: LineChartProps) {
         .attr("style", "fill: grey;")
         .attr("transform", (d, i) => `translate(5,${40 + i * 20})`)
         .text((d) => `${d[0]} - ${d[1]}`);
+
+      const headerText = formatDayMonthYear(X[i]);
+      d3.select(".toolTipHeader").text(headerText);
+
+      const maxLengthInToolTip = getMaxLengthOfToolTipText();
+
+      const widthToolTip = d3.max([
+        d3.select(".toolTipHeader").node().getBBox().width,
+        maxLengthInToolTip,
+      ]);
+      console.log("widthToolTip", widthToolTip);
+
+      d3.select(".toolTipPath").attr(
+        "d",
+        // `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`
+        `M 0 5 h ${+widthToolTip + 20} v ${
+          arrayForToolTip.length * 15 + 80
+        } h -${+widthToolTip + 20} Z`
+      );
 
       const { height: heightToolTip } = d3
         .select(".toolTipBlock")
@@ -356,7 +352,7 @@ export default function LineChart(props: LineChartProps) {
       let toolTipHorizontalPosition: number;
       let toolVertikalPosition: number;
       if (d3.pointer(ev)[0] > width / 2) {
-        toolTipHorizontalPosition = -155;
+        toolTipHorizontalPosition = -widthToolTip - 15;
       } else {
         toolTipHorizontalPosition = 10;
       }
@@ -388,6 +384,16 @@ export default function LineChart(props: LineChartProps) {
       // d3.select(".toolTip").attr("opacity", "0");
     }
 
+    function getMaxLengthOfToolTipText() {
+      const toolTipText = d3.selectAll(".toolTip").nodes();
+      const maxLenght = d3.max(toolTipText, (d) => d.getBBox().width);
+      // toolTipText.forEach((el) => {
+      //   console.log(el.getBBox().width);
+      // });
+      // console.log("toolTipText", toolTipText);
+      return maxLenght;
+    }
+
     function getArrayForToolTip(point) {
       // console.log("dataTime.get(point)", dataTime.get(point));
       const array = [];
@@ -405,8 +411,12 @@ export default function LineChart(props: LineChartProps) {
       start: any | undefined = undefined,
       end: any | undefined = undefined
     ) {
+      console.log("data in getMaximumInInterval", data);
+      console.log("start in getMaximumInInterval", start);
+      console.log("end in getMaximumInInterval", end);
       let maxY: number;
       if (start && end) {
+        console.log("if in getMaximumInInterval");
         maxY = d3.max(data, (d) =>
           start <= d["__timestamp"] && d["__timestamp"] <= end
             ? d[metrica]
@@ -415,8 +425,10 @@ export default function LineChart(props: LineChartProps) {
       } else {
         maxY = d3.max(data, (d) => d[metrica]);
       }
+      console.log("maxY in getMaximumInInterval", maxY);
       return maxY;
     }
+
     function getArrayOfValueEnableLines(): any[] {
       let arrayOfEnableValues = [];
       Array.from(dataGrouped).forEach((item) => {
@@ -442,8 +454,8 @@ export default function LineChart(props: LineChartProps) {
       });
 
       console.log("enableddataGrouped", enableddataGrouped);
-
-      // console.log("arrayOfEnableValues", arrayOfEnableValues);
+      console.log("currentSelection", currentSelection);
+      console.log("arrayOfEnableValues", arrayOfEnableValues);
 
       // const maxY = d3.max(arrayOfEnableValues, (d) => d[metrica]);
       const maxY = getMaximumInInterval(
@@ -451,6 +463,7 @@ export default function LineChart(props: LineChartProps) {
         currentSelection[0],
         currentSelection[1]
       );
+      console.log("maxY", maxY);
       y.domain([0, maxY]);
 
       yAxis.transition().duration(1000).call(yAxisSetting);
@@ -618,7 +631,12 @@ export default function LineChart(props: LineChartProps) {
       .on("end", brushedChart); // Each time the brush selection changes, trigger the 'updateChart' function
 
     // Add the brushing
-    lines.append("g").attr("class", "brush").attr("id", "brush").call(brush);
+    lines
+      .append("g")
+      .attr("class", "brush")
+      .attr("id", "brush")
+      .attr("transform", `translate(${padding.left},0)`)
+      .call(brush);
 
     // A function that set idleTimeOut to null
     let idleTimeout;
@@ -627,14 +645,31 @@ export default function LineChart(props: LineChartProps) {
     }
     function brushedChart(event, d) {
       // What are the selected boundaries?
-      // console.log("event in brush", event);
+
       // let extent = event.selection;
-      currentSelection = event.selection;
-      // console.log("currentSelection", currentSelection);
+      if (event.selection) {
+        // console.log(
+        //   `event.selection in brush - ${x.invert(
+        //     event.selection[0]
+        //   )},${x.invert(event.selection[1])}`
+        // );
+        currentSelection = [
+          x.invert(event.selection[0]),
+          x.invert(event.selection[1]),
+        ];
+
+        //currentSelection[0] =  x.invert(event.selection[0])
+      }
+      console.log(
+        "currentSelection in brush",
+        currentSelection[0],
+        currentSelection[1]
+      );
       // console.log("width",width)
       // console.log(width)
       // If no selection, back to initial coordinate. Otherwise, update X axis domain
-      if (!currentSelection) {
+      // if (!currentSelection) {
+      if (!event.selection) {
         if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
       } else {
         //получаем множество всех отображаемых значений
@@ -642,13 +677,10 @@ export default function LineChart(props: LineChartProps) {
         //находим максимальное значение на отображаемом интервале
         const maxY = getMaximumInInterval(
           arrayOfValueEnableLines,
-          x.invert(currentSelection[0] - padding.left),
-          x.invert(currentSelection[1] - padding.left)
+          currentSelection[0],
+          currentSelection[1]
         );
-        x.domain([
-          x.invert(currentSelection[0] - padding.left),
-          x.invert(currentSelection[1] - padding.left),
-        ]);
+        x.domain([currentSelection[0], currentSelection[1]]);
         y.domain([0, maxY]);
         lines.select(".brush").call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
       }
@@ -676,6 +708,7 @@ export default function LineChart(props: LineChartProps) {
       //получаем множество всех отображаемых значений
       const arrayOfValueEnableLines = getArrayOfValueEnableLines();
       //находим максимальное значение на отображаемом интервале
+      currentSelection = [0, widthWithPadding - 10];
       const maxY = getMaximumInInterval(arrayOfValueEnableLines);
       x.domain(
         d3.extent(data, function (d) {
