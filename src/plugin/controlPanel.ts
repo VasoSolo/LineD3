@@ -16,11 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t, validateNonEmpty } from '@superset-ui/core';
-import { ControlPanelConfig, sections, sharedControls } from '@superset-ui/chart-controls';
-const markerEnabled = true
-const legendEnabled = true
-const markerSize = 30
+import { t, validateNonEmpty } from "@superset-ui/core";
+import {
+  ControlPanelConfig,
+  sections,
+  sharedControls,
+} from "@superset-ui/chart-controls";
+const markerEnabled = true;
+const legendEnabled = true;
+const markerSize = 30;
 const config: ControlPanelConfig = {
   /**
    * The control panel is split into two tabs: "Query" and
@@ -97,29 +101,31 @@ const config: ControlPanelConfig = {
    */
 
   // For control input types, see: superset-frontend/src/explore/components/controls/index.js
-  
+
   controlPanelSections: [
     sections.legacyTimeseriesTime,
     {
-      label: t('Запрос'),
+      label: t("Запрос"),
       expanded: true,
       controlSetRows: [
         [
           {
-            name: 'groupby',
+            name: "groupby",
             config: {
               ...sharedControls.groupby,
-              label: t('Сгруппировать'),
-              description: t('Один или несколько столбцов, по которым данные будут сгруппированы'),
+              label: t("Сгруппировать"),
+              description: t(
+                "Один или несколько столбцов, по которым данные будут сгруппированы"
+              ),
             },
           },
         ],
         [
           {
-            name: 'metrics',
+            name: "metrics",
             config: {
               ...sharedControls.metrics,
-              label: t('Метрики'),
+              label: t("Метрики"),
               // it's possible to add validators to controls if
               // certain selections/types need to be enforced
               validators: [validateNonEmpty],
@@ -128,10 +134,10 @@ const config: ControlPanelConfig = {
         ],
         [
           {
-            name: 'adhoc_filters',
+            name: "adhoc_filters",
             config: {
               ...sharedControls.adhoc_filters,
-              label: t('Фильтры'),
+              label: t("Фильтры"),
               // it's possible to add validators to controls if
               // certain selections/types need to be enforced
               // validators: [validateNonEmpty],
@@ -141,30 +147,39 @@ const config: ControlPanelConfig = {
         //['adhoc_filters'],
         [
           {
-            name: 'row_limit',
-            config: {...sharedControls.row_limit,
-              label: t('Ограничение для количества строк'),}
+            name: "row_limit",
+            config: {
+              ...sharedControls.row_limit,
+              label: t("Ограничение для количества строк"),
+            },
           },
         ],
       ],
     },
+    // sections.genericTime,
+    // sections.echartsTimeSeriesQuery,
+    // sections.advancedAnalyticsControls,
+    // sections.annotationsAndLayersControls,
+    sections.forecastIntervalControls,
+    // sections.titleControls,
     {
-      label: t('Визуальные настройки графика'),
+      label: t("Визуальные настройки графика"),
       expanded: true,
       controlSetRows: [
         // ['getColorFormatters'],
         [
           {
-            name: 'color_scheme',
-            config: {...sharedControls.color_scheme,
-              label: t('Цветовые схемы'),
+            name: "color_scheme",
+            config: {
+              ...sharedControls.color_scheme,
+              label: t("Цветовые схемы"),
             },
           },
           {
-            name: 'lineWidth',
+            name: "lineWidth",
             config: {
-              type: 'SliderControl',
-              label: t('Толщина линий'),
+              type: "SliderControl",
+              label: t("Толщина линий"),
               renderTrigger: true,
               min: 1,
               max: 10,
@@ -174,135 +189,134 @@ const config: ControlPanelConfig = {
         ],
         [
           {
-            name: 'tickVertical',
+            name: "tickVertical",
             config: {
-              type: 'CheckboxControl',
-              label: t('Вертикальная сетка'),
+              type: "CheckboxControl",
+              label: t("Вертикальная сетка"),
               default: true,
-              renderTrigger: true,          
-            },
-          },
-          {
-            name: 'tickHorizontal',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Горизонтальная сетка'),
-              default: true,
-              renderTrigger: true,          
-            },
-          },
-        ],
-        [
-          {
-            name: 'areaMode',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Закрасить площадь'),
-              renderTrigger: true,          
-            },
-          },
-        ],
-        [
-          {
-            name: 'gradientArea',
-            config: {
-              type: 'CheckboxControl',
-              label: t('Градиент'),
               renderTrigger: true,
-              visibility: ({ controls }) =>
-                Boolean(controls?.areaMode?.value),          
             },
           },
           {
-            name: 'areaOpacity',
+            name: "tickHorizontal",
             config: {
-              type: 'SliderControl',
-              label: t('Прозрачность'),
+              type: "CheckboxControl",
+              label: t("Горизонтальная сетка"),
+              default: true,
+              renderTrigger: true,
+            },
+          },
+        ],
+        [
+          {
+            name: "areaMode",
+            config: {
+              type: "CheckboxControl",
+              label: t("Закрасить площадь"),
+              renderTrigger: true,
+            },
+          },
+        ],
+        [
+          {
+            name: "gradientArea",
+            config: {
+              type: "CheckboxControl",
+              label: t("Градиент"),
+              renderTrigger: true,
+              visibility: ({ controls }) => Boolean(controls?.areaMode?.value),
+            },
+          },
+          {
+            name: "areaOpacity",
+            config: {
+              type: "SliderControl",
+              label: t("Прозрачность"),
               renderTrigger: true,
               min: 0,
               max: 100,
               default: 50,
-              visibility: ({ controls }) =>
-                Boolean(controls?.areaMode?.value),
+              visibility: ({ controls }) => Boolean(controls?.areaMode?.value),
             },
           },
         ],
       ],
     },
     {
-      label: t('Отступы'),
-      expanded: true,
-      controlSetRows: [[
-        
-        {
-          name: 'marginLeft',
-          config: {
-            type: 'SliderControl',
-            default: 10,
-            renderTrigger: true,
-            label: t('Cлева'),
-            description: t('%'),
-          },
-        },
-        {
-          name: 'marginRight',
-          config: {
-            type: 'SliderControl',
-            default: 2,
-            renderTrigger: true,
-            label: t('Cправа'),
-            description: t('%'),
-          },
-        },
-        {
-          name: 'marginTop',
-          config: {
-            type: 'SliderControl',
-            default: 1,
-            renderTrigger: true,
-            label: t('Cверху'),
-            description: t('%'),
-          },
-        },
-        {
-          name: 'marginBottom',
-          config: {
-            type: 'SliderControl',
-            default: 10,
-            renderTrigger: true,
-            label: t('Cнизу'),
-            description: t('%'),
-          },
-        },
-      ],]
-    },
-    {
-      label: t('Маркеры'),
+      label: t("Отступы"),
       expanded: true,
       controlSetRows: [
         [
           {
-            name: 'markerEnabled',
+            name: "marginLeft",
             config: {
-              type: 'CheckboxControl',
-              label: t('Отображать маркеры'),
+              type: "SliderControl",
+              default: 10,
               renderTrigger: true,
-              default: markerEnabled,              
+              label: t("Cлева"),
+              description: t("%"),
+            },
+          },
+          {
+            name: "marginRight",
+            config: {
+              type: "SliderControl",
+              default: 2,
+              renderTrigger: true,
+              label: t("Cправа"),
+              description: t("%"),
+            },
+          },
+          {
+            name: "marginTop",
+            config: {
+              type: "SliderControl",
+              default: 1,
+              renderTrigger: true,
+              label: t("Cверху"),
+              description: t("%"),
+            },
+          },
+          {
+            name: "marginBottom",
+            config: {
+              type: "SliderControl",
+              default: 10,
+              renderTrigger: true,
+              label: t("Cнизу"),
+              description: t("%"),
+            },
+          },
+        ],
+      ],
+    },
+    {
+      label: t("Маркеры"),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: "markerEnabled",
+            config: {
+              type: "CheckboxControl",
+              label: t("Отображать маркеры"),
+              renderTrigger: true,
+              default: markerEnabled,
             },
           },
         ],
         [
           {
-            name: 'markerType',
+            name: "markerType",
             config: {
-              type: 'SelectControl',
-              label: t('Вид маркера'),
+              type: "SelectControl",
+              label: t("Вид маркера"),
               //default: 'В конце',
               choices: [
                 // [value, label]
-                ["symbolCircle", 'Круг'],
-                ["symbolTriangle", 'Треугольник'],
-                ["symbolSquare", 'Квадрат'],
+                ["symbolCircle", "Круг"],
+                ["symbolTriangle", "Треугольник"],
+                ["symbolSquare", "Квадрат"],
               ],
               default: "symbolCircle",
               renderTrigger: true,
@@ -311,10 +325,10 @@ const config: ControlPanelConfig = {
             },
           },
           {
-            name: 'markerSize',
+            name: "markerSize",
             config: {
-              type: 'SliderControl',
-              label: t('Размер маркера'),
+              type: "SliderControl",
+              label: t("Размер маркера"),
               renderTrigger: true,
               min: 0,
               max: 100,
@@ -325,63 +339,65 @@ const config: ControlPanelConfig = {
           },
         ],
       ],
-    },{
-      label: t('Легенда'),
+    },
+    {
+      label: t("Легенда"),
       expanded: true,
       controlSetRows: [
         [
           {
-            name: 'legendEnabled',
+            name: "legendEnabled",
             config: {
-              type: 'CheckboxControl',
-              label: t('Отображать легенду'),
+              type: "CheckboxControl",
+              label: t("Отображать легенду"),
               renderTrigger: true,
               default: legendEnabled,
-              
             },
           },
         ],
         [
           {
-            name: 'legendOrientation',
+            name: "legendOrientation",
             config: {
-              type: 'SelectControl',
-              label: t('Вид легенды'),
+              type: "SelectControl",
+              label: t("Вид легенды"),
               //default: 'В конце',
               choices: [
                 // [value, label]
-                ["legendVertical", 'Вертикальная'],
-                ["legendHorizontal", 'Горизонтальная'],
+                ["legendVertical", "Вертикальная"],
+                ["legendHorizontal", "Горизонтальная"],
               ],
               renderTrigger: true,
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
           },
-        ],[
+        ],
+        [
           {
-            name: 'legendHorizontPosition',
+            name: "legendHorizontPosition",
             config: {
-              type: 'SliderControl',
-              label: t('Позиция по горизонтали'),
+              type: "SliderControl",
+              label: t("Позиция по горизонтали"),
               renderTrigger: true,
               min: 1,
               max: 100,
               default: 20,
-              description: t('%'),
+              description: t("%"),
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
-          },{
-            name: 'legendVertialPosition',
+          },
+          {
+            name: "legendVertialPosition",
             config: {
-              type: 'SliderControl',
-              label: t('Позиция по вертикали'),
+              type: "SliderControl",
+              label: t("Позиция по вертикали"),
               renderTrigger: true,
               min: 1,
               max: 100,
               default: 20,
-              description: t('%'),
+              description: t("%"),
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
@@ -389,21 +405,22 @@ const config: ControlPanelConfig = {
         ],
         [
           {
-            name: 'legendFontSize',
+            name: "legendFontSize",
             config: {
-              type: 'TextControl',
+              type: "TextControl",
               default: 12,
               renderTrigger: true,
               // ^ this makes it apply instantaneously, without triggering a "run query" button
-              label: t('Шрифт'),
+              label: t("Шрифт"),
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
-          },{
-            name: 'legendItemPadding',
+          },
+          {
+            name: "legendItemPadding",
             config: {
-              type: 'SliderControl',
-              label: t('Отступы между элементами'),
+              type: "SliderControl",
+              label: t("Отступы между элементами"),
               renderTrigger: true,
               min: 1,
               max: 150,
@@ -411,7 +428,7 @@ const config: ControlPanelConfig = {
               visibility: ({ controls }) =>
                 Boolean(controls?.legendEnabled?.value),
             },
-          }
+          },
         ],
       ],
     },

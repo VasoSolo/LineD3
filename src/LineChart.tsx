@@ -2,8 +2,6 @@ import React, { useEffect, createRef } from "react";
 import { styled, CategoricalColorNamespace, t } from "@superset-ui/core";
 import { LineChartProps, LineChartStylesProps } from "./types";
 import * as d3 from "d3";
-import * as voron from "d3-voronoi";
-import { text } from "d3";
 
 // The following Styles component is a <div> element, which has been styled using Emotion
 // For docs, visit https://emotion.sh/docs/styled
@@ -36,6 +34,7 @@ const Styles = styled.div<LineChartStylesProps>`
 `;
 
 export default function LineChart(props: LineChartProps) {
+  console.log("props", props);
   let {
     data,
     height,
@@ -85,9 +84,14 @@ export default function LineChart(props: LineChartProps) {
   const heightWithPadding = height - padding.top - padding.bottom;
 
   const metrica = metrics[0]["label"];
+
   const dataGrouped = d3.group(data, (d) => {
     return d[groupby[0]];
   });
+
+  // const dataGrouped = d3.group(data, (d) => {
+  //   return d[groupby[0]];
+  // });
   let enableddataGrouped = Array.from(dataGrouped);
   const X = d3.map(data, (d) => {
     const r = d["__timestamp"] === null ? "" : d["__timestamp"];
@@ -234,7 +238,10 @@ export default function LineChart(props: LineChartProps) {
         .attr("y", 8)
         .attr("class", "legend-text")
         .attr("style", "cursor: pointer")
-        .text((d) => d)
+        .text((d) => {
+          const text = d === undefined ? metrica : d;
+          return text;
+        })
         // .text("ldchdjvdsjvln lndf f kenflkdn lkdnfdf dfk dlfk ndlkf")
         .attr("font-size", legendFontSize)
         .attr("alignment-baseline", "middle")
@@ -279,20 +286,21 @@ export default function LineChart(props: LineChartProps) {
     // createToolTip();
 
     function createToolTip() {
+      // console.log("createToolTip");
       const toolTipBlock = lines.append("g").attr("class", "toolTipBlock");
 
       const path = toolTipBlock
         .selectAll("path")
         .data([, ,])
         .join("path")
-        .attr("fill", "white")
-        .attr("stroke", "black")
+        .attr("fill", "Snow")
+        .attr("stroke", "DimGray")
         .attr("class", "toolTipPath");
 
       toolTipBlock
         .append("text")
         .attr("style", "font-weight: bold;")
-        .attr("transform", "translate(5,18)")
+        .attr("transform", "translate(5,25)")
         .attr("class", "toolTipHeader");
     }
 
@@ -321,7 +329,7 @@ export default function LineChart(props: LineChartProps) {
         .join("text")
         .attr("class", "toolTip")
         .attr("style", "fill: grey;")
-        .attr("transform", (d, i) => `translate(5,${40 + i * 20})`)
+        .attr("transform", (d, i) => `translate(5,${45 + i * 20})`)
         .text((d) => `${d[0]} - ${d[1]}`);
 
       const headerText = formatDayMonthYear(X[i]);
@@ -333,31 +341,35 @@ export default function LineChart(props: LineChartProps) {
         d3.select(".toolTipHeader").node().getBBox().width,
         maxLengthInToolTip,
       ]);
-      console.log("widthToolTip", widthToolTip);
+      const heightToolTipText = d3
+        .select(".toolTipHeader")
+        .node()
+        .getBBox().height;
 
+      const heightToolTipBox =
+        (arrayForToolTip.length + 1) * (heightToolTipText + 3) + 10;
       d3.select(".toolTipPath").attr(
         "d",
         // `M${-w / 2 - 10},5H-5l5,-5l5,5H${w / 2 + 10}v${h + 20}h-${w + 20}z`
-        `M 0 5 h ${+widthToolTip + 20} v ${
-          arrayForToolTip.length * 15 + 80
-        } h -${+widthToolTip + 20} Z`
+        `M 0 5 h ${+widthToolTip + 20} v ${heightToolTipBox} h -${
+          +widthToolTip + 20
+        } Z`
       );
 
       const { height: heightToolTip } = d3
         .select(".toolTipBlock")
         .node()
         .getBBox();
-      // console.log("heightToolTip", heightToolTip);
-      // console.log(d3.select(".toolTipBlock").node().getBBox());
+
       let toolTipHorizontalPosition: number;
       let toolVertikalPosition: number;
       if (d3.pointer(ev)[0] > width / 2) {
-        toolTipHorizontalPosition = -widthToolTip - 15;
+        toolTipHorizontalPosition = -widthToolTip - 30;
       } else {
         toolTipHorizontalPosition = 10;
       }
       if (d3.pointer(ev)[1] > height / 2) {
-        toolVertikalPosition = -heightToolTip;
+        toolVertikalPosition = -heightToolTip - 15;
       } else {
         toolVertikalPosition = 10;
       }
@@ -368,38 +380,28 @@ export default function LineChart(props: LineChartProps) {
           `translate(${d3.pointer(ev)[0] + toolTipHorizontalPosition},${
             d3.pointer(ev)[1] + toolVertikalPosition
           })`
-          // `translate(${d3.pointer(ev)[0] - 300},${d3.pointer(ev)[1] + 15})`
         );
-      // console.log(
-      //   "toolTipBlock.node().getBBox()",
-      //   d3.select(".toolTipBlock").node().getBBox()
-      // );
     }
     function hideToolTip(ev) {
-      // svg.selectAll(".toolTipBlock").remove();
       svg.select(".toolTipBlock").remove();
-      // svg.selectAll(".toolTip").remove();
 
       d3.select(".toolTipLine").attr("opacity", "0");
-      // d3.select(".toolTip").attr("opacity", "0");
     }
 
     function getMaxLengthOfToolTipText() {
       const toolTipText = d3.selectAll(".toolTip").nodes();
       const maxLenght = d3.max(toolTipText, (d) => d.getBBox().width);
-      // toolTipText.forEach((el) => {
-      //   console.log(el.getBBox().width);
-      // });
-      // console.log("toolTipText", toolTipText);
       return maxLenght;
     }
 
     function getArrayForToolTip(point) {
-      // console.log("dataTime.get(point)", dataTime.get(point));
       const array = [];
       dataTime.get(point)?.forEach((el) => {
-        if (lineEnable[String(el[groupby[0]])])
-          array.push([String(el[groupby[0]]), String(el[metrica])]);
+        if (lineEnable[String(el[groupby[0]])]) {
+          const text =
+            el[groupby[0]] != undefined ? String(el[groupby[0]]) : metrica;
+          array.push([text, String(el[metrica])]);
+        }
       });
       return array;
     }
@@ -453,9 +455,9 @@ export default function LineChart(props: LineChartProps) {
         }
       });
 
-      console.log("enableddataGrouped", enableddataGrouped);
-      console.log("currentSelection", currentSelection);
-      console.log("arrayOfEnableValues", arrayOfEnableValues);
+      // console.log("enableddataGrouped", enableddataGrouped);
+      // console.log("currentSelection", currentSelection);
+      // console.log("arrayOfEnableValues", arrayOfEnableValues);
 
       // const maxY = d3.max(arrayOfEnableValues, (d) => d[metrica]);
       const maxY = getMaximumInInterval(
@@ -537,6 +539,7 @@ export default function LineChart(props: LineChartProps) {
 
       //рисуем линии
       enableddataGrouped.forEach((data, key) => {
+        console.log("data in drawLines", data);
         const lineId = String(data[0]);
         arrayLinesId.push(lineId);
         const lineData = data[1];
