@@ -90,9 +90,6 @@ export default function LineChart(props: LineChartProps) {
     return d[groupby[0]];
   });
 
-  // const dataGrouped = d3.group(data, (d) => {
-  //   return d[groupby[0]];
-  // });
   let enableddataGrouped = Array.from(dataGrouped);
   const X = d3.map(data, (d) => {
     const r = d["__timestamp"] === null ? "" : d["__timestamp"];
