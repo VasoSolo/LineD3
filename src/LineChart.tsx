@@ -2,6 +2,7 @@ import React, { useEffect, createRef } from "react";
 import { styled, CategoricalColorNamespace, t } from "@superset-ui/core";
 import { LineChartProps, LineChartStylesProps } from "./types";
 import * as d3 from "d3";
+import legend from "./plugin/legend";
 
 // The following Styles component is a <div> element, which has been styled using Emotion
 // For docs, visit https://emotion.sh/docs/styled
@@ -45,7 +46,7 @@ export default function LineChart(props: LineChartProps) {
     markerType,
     markerEnabled,
     markerSize,
-    legendVertialPosition,
+    legendVerticalPosition,
     legendHorizontPosition,
     legendOrientation,
     legendEnabled,
@@ -203,7 +204,7 @@ export default function LineChart(props: LineChartProps) {
         .attr("transform", function (d, i) {
           return `translate(${
             (width * legendHorizontPosition) / 100
-          },${(height * legendVertialPosition) / 100})`;
+          },${(height * legendVerticalPosition) / 100})`;
         });
 
       const legendItem = legendContainer

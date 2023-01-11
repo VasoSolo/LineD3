@@ -389,7 +389,7 @@ const config: ControlPanelConfig = {
             },
           },
           {
-            name: "legendVertialPosition",
+            name: "legendVerticalPosition",
             config: {
               type: "SliderControl",
               label: t("Позиция по вертикали"),

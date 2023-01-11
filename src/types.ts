@@ -16,39 +16,55 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Metric, QueryFormData, supersetTheme, TimeseriesDataRecord } from '@superset-ui/core';
+import {
+  Metric,
+  QueryFormData,
+  supersetTheme,
+  TimeseriesDataRecord,
+} from "@superset-ui/core";
 
 export interface LineChartStylesProps {
   height: number;
   width: number;
-  groupby: string[],
-  metrics: Metric[],
-  colorScheme: string,
-  markerType: string,
-  markerEnabled: boolean,
-  markerSize: number,
-  legendVertialPosition: number,
-  legendHorizontPosition: number,
-  legendOrientation: string,
-  legendEnabled: boolean,
-  legendFontSize:number,
+  groupby: string[];
+  metrics: Metric[];
+  colorScheme: string;
+  markerType: string;
+  markerEnabled: boolean;
+  markerSize: number;
+  legendVerticalPosition: number;
+  legendHorizontPosition: number;
+  legendOrientation: string;
+  legendEnabled: boolean;
+  legendFontSize: number;
   legendItemPadding: number;
-  areaMode:boolean,
-  lineWidth:number,
-  tickVertical:boolean,
-  tickHorizontal:boolean,
-  gradientArea:boolean,
-  areaOpacity:number,
-  marginBottom:number,
-  marginTop:number,
-  marginLeft:number,
-  marginRight:number,
+  areaMode: boolean;
+  lineWidth: number;
+  tickVertical: boolean;
+  tickHorizontal: boolean;
+  gradientArea: boolean;
+  areaOpacity: number;
+  marginBottom: number;
+  marginTop: number;
+  marginLeft: number;
+  marginRight: number;
   headerFontSize: keyof typeof supersetTheme.typography.sizes;
   boldText: boolean;
 }
 
 interface LineChartCustomizeProps {
   headerText: string;
+}
+
+export interface LegendFunction {
+  data: [];
+  height: number;
+  width: number;
+  legendVerticalPosition: number;
+  legendHorizontPosition: number;
+  legendOrientation: string;
+  legendFontSize: number;
+  legendItemPadding: number;
 }
 
 export type LineChartQueryFormData = QueryFormData &
