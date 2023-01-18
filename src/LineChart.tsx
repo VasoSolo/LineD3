@@ -35,7 +35,7 @@ const Styles = styled.div<LineChartStylesProps>`
 `;
 
 export default function LineChart(props: LineChartProps) {
-  console.log("props", props);
+  // console.log("props", props);
   let {
     data,
     height,
@@ -75,33 +75,81 @@ export default function LineChart(props: LineChartProps) {
     bottom: (height * marginBottom) / 100,
   };
 
-  data.sort(function (a, b) {
-    const s1 = a.__timestamp === null ? 1 : a.__timestamp;
-    const s2 = b.__timestamp === null ? 1 : b.__timestamp;
-    return +s1 - +s2;
-  });
+  // data.sort(function (a, b) {
+  //   const s1 = a.__timestamp === null ? 1 : a.__timestamp;
+  //   const s2 = b.__timestamp === null ? 1 : b.__timestamp;
+  //   return +s1 - +s2;
+  // });
 
   const widthWithPadding = width - padding.left - padding.right;
   const heightWithPadding = height - padding.top - padding.bottom;
 
   const metrica = metrics[0]["label"];
 
-  const dataGrouped = d3.group(data, (d) => {
-    return d[groupby[0]];
+  const namesGroup = Object.keys(data[0]).slice(1);
+  console.log("namesGroup", namesGroup);
+
+  const dataGroupedArray = namesGroup.map((group) => {
+    return d3.groups(data, (d) => {
+      // console.log("d in dataGroupedArray = namesGroup.map", d);
+      return group;
+    });
   });
 
+  const dataGroupedArrayOneGroupInItem = dataGroupedArray.map((item) => {
+    return [
+      item[0][0],
+      item[0][1].reduce((acc, i) => {
+        if (i[item[0][0]]) {
+          acc.push({ value: i[item[0][0]], __timestamp: i["__timestamp"] });
+        }
+        return acc;
+      }, []),
+    ];
+  });
+
+  // console.log("dataGroupedArrayOneGroupInItem", dataGroupedArrayOneGroupInItem);
+
+  const dataGrouped = new Map(
+    dataGroupedArrayOneGroupInItem.map((obj) => {
+      // console.log("obj", obj);
+      return [obj[0], obj[1]];
+    })
+  );
+
   let enableddataGrouped = Array.from(dataGrouped);
+
+  // console.log("enableddataGrouped", enableddataGrouped);
+
   const X = d3.map(data, (d) => {
     const r = d["__timestamp"] === null ? "" : d["__timestamp"];
     return r;
   });
+  // console.log("X", X);
   const dataTime = d3.group(data, (d) => d["__timestamp"]);
+  // console.log("dataTime", dataTime);
+
+  let Y_WithRepitition = [];
+  data.forEach((item) => {
+    let items = [];
+    namesGroup.forEach((nameItem) => {
+      if (item[nameItem] != null) {
+        items.push(item[nameItem]);
+      }
+    });
+    // const itemsUniq = new Set(items);
+    Y_WithRepitition.push(...items);
+  });
+  const Y = new Set(Y_WithRepitition);
+  // console.log("Y", Y);
+
   let arrayForToolTip: string[][] = [];
 
+  console.log("data", data);
   console.log("dataTime", dataTime);
   console.log("dataGrouped", dataGrouped);
   console.log("dataGrouped.keys()", dataGrouped.keys());
-  console.log("Array.from(dataGrouped)", Array.from(dataGrouped));
+  console.log("enableddataGrouped", enableddataGrouped);
 
   let lineEnable: { [index: string]: boolean } = {};
   Array.from(dataGrouped.keys()).forEach((item) => {
@@ -132,14 +180,14 @@ export default function LineChart(props: LineChartProps) {
       )
       .range([0, widthWithPadding - 10]);
 
+    // const x = d3
+    //   .scaleTime()
+    //   .domain(d3.extent(X))
+    //   .range([0, widthWithPadding - 10]);
+
     const y = d3
       .scaleLinear()
-      .domain([
-        0,
-        d3.max(data, function (d) {
-          return d[metrica];
-        }),
-      ])
+      .domain([0, d3.max(Y)])
       .range([height, padding.bottom + padding.top]);
 
     const color = CategoricalColorNamespace.getScale(colorScheme);
@@ -237,7 +285,7 @@ export default function LineChart(props: LineChartProps) {
         .attr("class", "legend-text")
         .attr("style", "cursor: pointer")
         .text((d) => {
-          const text = d === undefined ? metrica : d;
+          const text = d === undefined ? metrica : d.split(",")[1];
           return text;
         })
         // .text("ldchdjvdsjvln lndf f kenflkdn lkdnfdf dfk dlfk ndlkf")
@@ -306,7 +354,7 @@ export default function LineChart(props: LineChartProps) {
     const formatMonth = d3.timeFormat("%B");
     const formatDay = d3.timeFormat("%a %d");
     const formatDayMonthYear = d3.timeFormat("%d %B %Y");
-    console.log("1");
+    // console.log("1");
 
     function moveToolTip(ev) {
       const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
@@ -395,11 +443,14 @@ export default function LineChart(props: LineChartProps) {
     function getArrayForToolTip(point) {
       const array = [];
       dataTime.get(point)?.forEach((el) => {
-        if (lineEnable[String(el[groupby[0]])]) {
-          const text =
-            el[groupby[0]] != undefined ? String(el[groupby[0]]) : metrica;
-          array.push([text, String(el[metrica])]);
-        }
+        namesGroup.forEach((nameGroup) => {
+          if (dataTime.get(point)[0][nameGroup]) {
+            array.push([
+              nameGroup.split(",")[1],
+              dataTime.get(point)[0][nameGroup],
+            ]);
+          }
+        });
       });
       return array;
     }
@@ -411,59 +462,67 @@ export default function LineChart(props: LineChartProps) {
       start: any | undefined = undefined,
       end: any | undefined = undefined
     ) {
-      console.log("data in getMaximumInInterval", data);
-      console.log("start in getMaximumInInterval", start);
-      console.log("end in getMaximumInInterval", end);
+      // console.log("data in getMaximumInInterval", data);
+      // console.log("start in getMaximumInInterval", start);
+      // console.log("end in getMaximumInInterval", end);
       let maxY: number;
+
       if (start && end) {
-        console.log("if in getMaximumInInterval");
+        // console.log("if in getMaximumInInterval");
         maxY = d3.max(data, (d) =>
           start <= d["__timestamp"] && d["__timestamp"] <= end
-            ? d[metrica]
+            ? d["maxInTime"]
             : NaN
         );
       } else {
-        maxY = d3.max(data, (d) => d[metrica]);
+        maxY = d3.max(data, (d) => d["maxInTime"]);
       }
-      console.log("maxY in getMaximumInInterval", maxY);
+      // console.log("maxY in getMaximumInInterval", maxY);
       return maxY;
     }
 
-    function getArrayOfValueEnableLines(): any[] {
+    function getArrayOfValueEnableLines() {
       let arrayOfEnableValues = [];
-      Array.from(dataGrouped).forEach((item) => {
-        if (lineEnable[String(item[0])]) {
-          // console.log("item from dataGrouped in filter", item[1]);
-          arrayOfEnableValues.push(...item[1]);
-        }
+
+      data.forEach((item) => {
+        let arrayOfTime = [];
+        namesGroup.forEach((nameGroup) => {
+          if (item[nameGroup] && lineEnable[nameGroup]) {
+            arrayOfTime.push(item[nameGroup]);
+          }
+        });
+        arrayOfEnableValues.push({
+          __timestamp: item["__timestamp"],
+          maxInTime: d3.max(arrayOfTime),
+        });
       });
+      // console.log(
+      //   "arrayOfEnableValues in getArrayOfValueEnableLines",
+      //   arrayOfEnableValues
+      // );
       return arrayOfEnableValues;
     }
 
     drawLines();
     function drawLines() {
       // enableddataGrouped = renderEnableArray();
-
+      console.log("drawLines");
       let arrayOfEnableValues = [];
-      enableddataGrouped = Array.from(dataGrouped).filter((item) => {
-        if (lineEnable[String(item[0])]) {
-          // console.log("item from dataGrouped in filter", item[1]);
-          arrayOfEnableValues.push(...item[1]);
-          return item;
-        }
-      });
+      enableddataGrouped = Array.from(dataGrouped).filter(
+        (item) => lineEnable[String(item[0])]
+      );
 
-      // console.log("enableddataGrouped", enableddataGrouped);
+      arrayOfEnableValues = getArrayOfValueEnableLines();
+      console.log("enableddataGrouped in drawLines", enableddataGrouped);
       // console.log("currentSelection", currentSelection);
-      // console.log("arrayOfEnableValues", arrayOfEnableValues);
+      // console.log("arrayOfEnableValues in drawLines", arrayOfEnableValues);
 
-      // const maxY = d3.max(arrayOfEnableValues, (d) => d[metrica]);
       const maxY = getMaximumInInterval(
         arrayOfEnableValues,
         currentSelection[0],
         currentSelection[1]
       );
-      console.log("maxY", maxY);
+      // console.log("maxY", maxY);
       y.domain([0, maxY]);
 
       yAxis.transition().duration(1000).call(yAxisSetting);
@@ -478,13 +537,16 @@ export default function LineChart(props: LineChartProps) {
       svg.selectAll(".area").remove();
       svg.selectAll(".line").remove();
       svg.selectAll(".marker").remove();
-      let arrayLinesId: string[] = [];
+      // let arrayLinesId: string[] = [];
 
       //закрашиваем площади
       if (areaMode) {
+        console.log("areaMode");
         enableddataGrouped.forEach((data, key) => {
+          console.log("data in areaMode", data);
           const lineId = String(data[0]);
-          arrayLinesId.push(lineId);
+          console.log("lineId in areaMode", lineId);
+          // arrayLinesId.push(lineId);
           const lineData = data[1];
           const area = lines
             .append("path")
@@ -503,7 +565,7 @@ export default function LineChart(props: LineChartProps) {
                 })
                 .y0(height)
                 .y1(function (d) {
-                  return y(d[metrica]);
+                  return y(d["value"]);
                 })
             );
 
@@ -537,14 +599,9 @@ export default function LineChart(props: LineChartProps) {
 
       //рисуем линии
       enableddataGrouped.forEach((data, key) => {
-        console.log("data in drawLines", data);
+        // console.log("data in drawLines", data);
         const lineId = String(data[0]);
-        arrayLinesId.push(lineId);
         const lineData = data[1];
-        lineData.sort(function (a, b) {
-          return +a.__timestamp - +b.__timestamp;
-        });
-
         const line = lines
           .append("g")
           .attr("id", `g-${lineId}`)
@@ -564,7 +621,8 @@ export default function LineChart(props: LineChartProps) {
                 return x(d["__timestamp"]);
               })
               .y(function (d) {
-                return y(d[metrica]);
+                // console.log("d in lines", lineId, d);
+                return y(d["value"]);
               })
           );
 
@@ -579,7 +637,7 @@ export default function LineChart(props: LineChartProps) {
               "transform",
               (d) =>
                 `translate(${x(d["__timestamp"]) + padding.left}, ${
-                  y(d[metrica]) - padding.bottom
+                  y(d["value"]) - padding.bottom
                 })`
             )
             .attr("fill", color(lineId));
@@ -587,6 +645,7 @@ export default function LineChart(props: LineChartProps) {
       });
     }
     function lineOrAreaRender() {
+      console.log("lineOrAreaRender");
       if (areaMode) {
         lines
           .selectAll(".area")
@@ -601,7 +660,7 @@ export default function LineChart(props: LineChartProps) {
               })
               .y0(height)
               .y1(function (d) {
-                return y(d[metrica]);
+                return y(d["value"]);
               })
           );
       }
@@ -617,7 +676,7 @@ export default function LineChart(props: LineChartProps) {
               return x(d["__timestamp"]);
             })
             .y(function (d) {
-              return y(d[metrica]);
+              return y(d["value"]);
             })
         );
     }
@@ -645,6 +704,7 @@ export default function LineChart(props: LineChartProps) {
       idleTimeout = null;
     }
     function brushedChart(event, d) {
+      console.log("brushedChart");
       // What are the selected boundaries?
 
       // let extent = event.selection;
@@ -661,11 +721,11 @@ export default function LineChart(props: LineChartProps) {
 
         //currentSelection[0] =  x.invert(event.selection[0])
       }
-      console.log(
-        "currentSelection in brush",
-        currentSelection[0],
-        currentSelection[1]
-      );
+      // console.log(
+      //   "currentSelection in brush",
+      //   currentSelection[0],
+      //   currentSelection[1]
+      // );
       // console.log("width",width)
       // console.log(width)
       // If no selection, back to initial coordinate. Otherwise, update X axis domain
@@ -700,7 +760,7 @@ export default function LineChart(props: LineChartProps) {
           "transform",
           (d) =>
             `translate(${x(d["__timestamp"]) + padding.left}, ${
-              y(d[metrica]) - padding.bottom
+              y(d["value"]) - padding.bottom
             })`
         );
     }
@@ -732,7 +792,7 @@ export default function LineChart(props: LineChartProps) {
           "transform",
           (d) =>
             `translate(${x(d["__timestamp"]) + padding.left}, ${
-              y(d[metrica]) - padding.bottom
+              y(d["value"]) - padding.bottom
             })`
         );
     });
@@ -753,7 +813,7 @@ export default function LineChart(props: LineChartProps) {
     createChart(element);
   }, [props]);
 
-  console.log("Plugin props", props);
+  // console.log("Plugin props", props);
 
   return (
     <Styles
