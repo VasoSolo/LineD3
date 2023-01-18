@@ -569,10 +569,45 @@ export default function LineChart(props: LineChartProps) {
                 })
             );
 
+          // var lg = lines
+          //   .append("defs")
+          //   .append("linearGradient")
+          //   .attr("id", `mygrad_${lineId.split(",")[1]}`) //id of the gradient
+          //   .attr("x1", "0%")
+          //   .attr("x2", "0%")
+          //   .attr("y1", "0%")
+          //   .attr("y2", "100%"); //since its a vertical linear gradient
+          // lg.append("stop")
+          //   .attr("offset", "0%")
+          //   // .style("stop-color", color(lineId))
+          //   .style("stop-color", "green")
+          //   .style("stop-opacity", 1);
+
+          // lg.append("stop")
+          //   .attr("offset", "100%")
+          //   .style("stop-color", "white")
+          //   .style("stop-opacity", areaOpacity / 100);
+
+          // if (gradientArea) {
+          //   area.attr("fill", `url(#mygrad_${lineId.split(",")[1]})`);
+          // } else {
+          //   area
+          //     .attr("fill", color(lineId))
+          //     .attr("fill-opacity", areaOpacity / 100);
+          // }
+          // console.log("lineId", lineId.replace(/,/g, "_").replace(/\s/g, "_"));
+          const gradId = lineId.replace(/\s|\(|\)|,/gm, "");
+          // .replace(/,/g, "_")
+          // .replace(/\s/g, "_")
+          // .replace(/\(/g, "")
+          // .replace(/\)/g, "");
+
+          console.log("gradId", gradId);
+          // .replace(/,/g, '-')
           var lg = lines
             .append("defs")
             .append("linearGradient")
-            .attr("id", `mygrad_${lineId}`) //id of the gradient
+            .attr("id", `mygrad_${gradId}`) //id of the gradient
             .attr("x1", "0%")
             .attr("x2", "0%")
             .attr("y1", "0%")
@@ -580,15 +615,14 @@ export default function LineChart(props: LineChartProps) {
           lg.append("stop")
             .attr("offset", "0%")
             .style("stop-color", color(lineId))
+            // .style("stop-color", "green")
             .style("stop-opacity", 1);
 
-          lg.append("stop")
-            .attr("offset", "100%")
-            .style("stop-color", "white")
-            .style("stop-opacity", areaOpacity / 100);
+          lg.append("stop").attr("offset", "100%").style("stop-color", "white");
+          // .style("stop-opacity", areaOpacity / 100);
 
           if (gradientArea) {
-            area.attr("fill", `url(#mygrad_${lineId})`);
+            area.attr("fill", `url(#mygrad_${gradId})`);
           } else {
             area
               .attr("fill", color(lineId))
