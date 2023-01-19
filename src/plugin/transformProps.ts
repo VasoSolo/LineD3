@@ -75,10 +75,16 @@ export default function transformProps(chartProps: ChartProps) {
     marginTop,
     marginLeft,
     marginRight,
+    forecastEnabled,
+    forecastInterval,
+    forecastPeriods,
+    forecastSeasonalityDaily,
+    forecastSeasonalityWeekly,
+    forecastSeasonalityYearly,
   } = formData;
   const data = queriesData[0].data as TimeseriesDataRecord[];
 
-  // console.log("chartProps via TransformProps.ts", chartProps);
+  console.log("chartProps via TransformProps.ts", chartProps);
 
   return {
     width,
@@ -116,5 +122,11 @@ export default function transformProps(chartProps: ChartProps) {
     marginTop,
     marginLeft,
     marginRight,
+    forecastEnabled,
+    forecastInterval,
+    forecastPeriods,
+    forecastSeasonalityDaily,
+    forecastSeasonalityWeekly,
+    forecastSeasonalityYearly,
   };
 }

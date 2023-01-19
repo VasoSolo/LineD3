@@ -50,6 +50,12 @@ export interface LineChartStylesProps {
   marginRight: number;
   headerFontSize: keyof typeof supersetTheme.typography.sizes;
   boldText: boolean;
+  forecastEnabled: boolean;
+  forecastInterval: number;
+  forecastPeriods: any;
+  forecastSeasonalityDaily: boolean;
+  forecastSeasonalityWeekly: boolean;
+  forecastSeasonalityYearly: boolean;
 }
 
 interface LineChartCustomizeProps {
