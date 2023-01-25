@@ -2,9 +2,10 @@ import React, { useEffect, createRef } from "react";
 import { styled, CategoricalColorNamespace, t } from "@superset-ui/core";
 import { LineChartProps, LineChartStylesProps } from "./types";
 import * as d3 from "d3";
-import createChartWithForecast from "./createChart";
+import { createChartWithForecast } from "./createChart";
 import { legend, clickLegend } from "./legend";
 import { createToolTip, moveToolTip, hideToolTip } from "./toolTip";
+import { getMaximumInInterval, getArrayOfValueEnableLines } from "./function";
 
 // The following Styles component is a <div> element, which has been styled using Emotion
 // For docs, visit https://emotion.sh/docs/styled
@@ -37,7 +38,7 @@ const Styles = styled.div<LineChartStylesProps>`
 `;
 
 export default function LineChart(props: LineChartProps) {
-  console.log("props", props);
+  // console.log("props", props);
   let {
     data,
     height,
@@ -89,7 +90,15 @@ export default function LineChart(props: LineChartProps) {
   const metrica = metrics[0]["label"];
 
   const namesGroup = Object.keys(data[0]).slice(1);
-  console.log("namesGroup", namesGroup);
+  // const namesGroup = Object.keys(data[0])
+  //   .slice(1)
+  //   .filter(
+  //     (name) =>
+  //       name.indexOf("__yhat_lower") < 0 &&
+  //       name.indexOf("__yhat_upper") < 0 &&
+  //       name.indexOf("__yhat") < 0
+  //   );
+  // console.log("namesGroup", namesGroup);
   //---------------------------------------------------------------------------------------подготовка данных
   // const formatYear = d3.timeFormat("%Y");
   // const formatMonth = d3.timeFormat("%B");
@@ -103,6 +112,22 @@ export default function LineChart(props: LineChartProps) {
     });
   });
 
+  const dataGrouped = namesGroup.map((nameGroup) => {
+    const itemDataGroupedArray = data.reduce((acc, item) => {
+      if (item[`${nameGroup}`]) {
+        acc.push({
+          value: item[`${nameGroup}`],
+          __timestamp: item["__timestamp"],
+        });
+      }
+      return acc;
+    }, []);
+    return { nameGroup: nameGroup, array: itemDataGroupedArray };
+  });
+  // console.log("test", test);
+
+  // console.log("dataGroupedArray in LineChart", dataGroupedArray);
+
   const dataGroupedArrayOneGroupInItem = dataGroupedArray.map((item) => {
     return [
       item[0][0],
@@ -115,14 +140,25 @@ export default function LineChart(props: LineChartProps) {
     ];
   });
 
-  // console.log("dataGroupedArrayOneGroupInItem", dataGroupedArrayOneGroupInItem);
+  console.log("dataGroupedArrayOneGroupInItem", dataGroupedArrayOneGroupInItem);
 
-  const dataGrouped = new Map(
-    dataGroupedArrayOneGroupInItem.map((obj) => {
-      // console.log("obj", obj);
-      return [obj[0], obj[1]];
-    })
-  );
+  // const dataGrouped = new Map(
+  //   dataGroupedArrayOneGroupInItem.map((obj) => {
+  //     // console.log("obj", obj);
+  //     return [obj[0], obj[1]];
+  //   })
+  // );
+
+  // const dataGrouped = namesGroup.map((nameGroup) => {
+  //   const itemDataGroupedArray = data.reduce((acc, item) => {
+  //     acc.push({
+  //       value: item[`${nameGroup}`],
+  //       __timestamp: item["__timestamp"],
+  //     });
+  //     return acc;
+  //   }, []);
+  //   return { nameGroup: nameGroup, array: itemDataGroupedArray };
+  // });
 
   let enableddataGrouped = Array.from(dataGrouped);
 
@@ -141,7 +177,7 @@ export default function LineChart(props: LineChartProps) {
     let items = [];
     namesGroup.forEach((nameItem) => {
       if (item[nameItem] != null) {
-        items.push(item[nameItem]);
+        items.push(+item[nameItem]);
       }
     });
     // const itemsUniq = new Set(items);
@@ -152,16 +188,22 @@ export default function LineChart(props: LineChartProps) {
 
   let arrayForToolTip: string[][] = [];
 
-  console.log("data", data);
-  console.log("dataTime", dataTime);
+  // console.log("data", data);
+  // console.log("dataTime", dataTime);
   console.log("dataGrouped", dataGrouped);
-  console.log("dataGrouped.keys()", dataGrouped.keys());
-  console.log("enableddataGrouped", enableddataGrouped);
+  // console.log("dataGrouped.keys()", dataGrouped.keys());
+  // console.log("enableddataGrouped", enableddataGrouped);
+
+  // let lineEnable: { [index: string]: boolean } = {};
+  // Array.from(dataGrouped.keys()).forEach((item) => {
+  //   lineEnable[String(item)] = true;
+  // });
 
   let lineEnable: { [index: string]: boolean } = {};
-  Array.from(dataGrouped.keys()).forEach((item) => {
-    lineEnable[String(item)] = true;
+  dataGrouped.forEach((item) => {
+    lineEnable[String(item.nameGroup)] = true;
   });
+
   console.log("lineEnable", lineEnable);
 
   const myProps = {
@@ -171,8 +213,14 @@ export default function LineChart(props: LineChartProps) {
     widthWithPadding,
     heightWithPadding,
     Y,
+    X,
+    enableddataGrouped,
     lineEnable,
     metrica,
+    arrayForToolTip,
+    formatDayMonthYear,
+    dataTime,
+    namesGroup,
   };
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,10 +352,7 @@ export default function LineChart(props: LineChartProps) {
         legendVerticalPosition,
       };
       const legendClasses = legend(legendProps);
-      console.log(legendClasses);
-
-      // svg.selectAll(`.${legendClasses.rectClass}`).on("click", clickLegend);
-      // svg.selectAll(`.${legendClasses.textClass}`).on("click", clickLegend);
+      // console.log(legendClasses);
 
       svg.selectAll(`.${legendClasses.rectClass}`).on("click", () => {
         clickLegend(event, lineEnable);
@@ -317,25 +362,6 @@ export default function LineChart(props: LineChartProps) {
         clickLegend(event, lineEnable);
         drawLines();
       });
-
-      // function clickLegend(ev) {
-      //   console.log("clickLegend");
-      //   lineEnable[ev.path[0]["__data__"]] =
-      //     !lineEnable[ev.path[0]["__data__"]];
-
-      //   let opacityValue = "0.1";
-      //   let isnotSelect = true;
-      //   if (d3.select(ev.path[1]).attr("class") === "select") {
-      //     opacityValue = "1";
-      //     isnotSelect = false;
-      //   }
-      //   // console.log("brush");
-      //   d3.select(ev.path[1])
-      //     .classed("select", isnotSelect)
-      //     .select(".legend-rect-color")
-      //     .attr("opacity", opacityValue);
-      //   drawLines();
-      // }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,86 +383,43 @@ export default function LineChart(props: LineChartProps) {
       .attr("id", "toolTipLine")
       .attr("transform", `translate(0,${padding.top})`);
 
-    //////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////paint data
-    //возвращает максимум на выделенном интервале
-    function getMaximumInInterval(
-      data: any[],
-      start: any | undefined = undefined,
-      end: any | undefined = undefined
-    ) {
-      // console.log("data in getMaximumInInterval", data);
-      // console.log("start in getMaximumInInterval", start);
-      // console.log("end in getMaximumInInterval", end);
-      let maxY: number;
-
-      if (start && end) {
-        // console.log("if in getMaximumInInterval");
-        maxY = d3.max(data, (d) =>
-          start <= d["__timestamp"] && d["__timestamp"] <= end
-            ? d["maxInTime"]
-            : NaN
-        );
-      } else {
-        maxY = d3.max(data, (d) => d["maxInTime"]);
-      }
-      // console.log("maxY in getMaximumInInterval", maxY);
-      return maxY;
-    }
-
-    //возвращает массив - для каждой временной точки соответсвующее максимальное значение из отображаемых
-    function getArrayOfValueEnableLines() {
-      let arrayOfEnableValues = [];
-
-      data.forEach((item) => {
-        let arrayOfTime = [];
-        namesGroup.forEach((nameGroup) => {
-          if (item[nameGroup] && lineEnable[nameGroup]) {
-            arrayOfTime.push(item[nameGroup]);
-          }
-        });
-        arrayOfEnableValues.push({
-          __timestamp: item["__timestamp"],
-          maxInTime: d3.max(arrayOfTime),
-        });
-      });
-      return arrayOfEnableValues;
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     drawLines();
 
     function drawLines() {
       // enableddataGrouped = renderEnableArray();
       console.log("drawLines");
       let arrayOfEnableValues = [];
-      enableddataGrouped = Array.from(dataGrouped).filter(
-        (item) => lineEnable[String(item[0])]
+      enableddataGrouped = dataGrouped.filter(
+        (item) => lineEnable[String(item.nameGroup)]
       );
 
-      arrayOfEnableValues = getArrayOfValueEnableLines();
+      arrayOfEnableValues = getArrayOfValueEnableLines(
+        data,
+        namesGroup,
+        lineEnable
+      );
       console.log("enableddataGrouped in drawLines", enableddataGrouped);
       // console.log("currentSelection", currentSelection);
       // console.log("arrayOfEnableValues in drawLines", arrayOfEnableValues);
 
-      const maxY = getMaximumInInterval(
+      const minMaxY = getMaximumInInterval(
         arrayOfEnableValues,
         currentSelection[0],
         currentSelection[1]
       );
       // console.log("maxY", maxY);
-      y.domain([0, maxY]);
+      y.domain([0, minMaxY[1]]);
 
       yAxis.transition().duration(1000).call(yAxisSetting);
       renderTick();
@@ -444,7 +427,7 @@ export default function LineChart(props: LineChartProps) {
 
       // const valueEnableLines = d3.group(enableddataGrouped, d => d)
 
-      console.log("maxY", maxY);
+      console.log("minMaxY", minMaxY);
 
       svg.selectAll(".area").remove();
       svg.selectAll(".line").remove();
@@ -456,10 +439,10 @@ export default function LineChart(props: LineChartProps) {
         console.log("areaMode");
         enableddataGrouped.forEach((data, key) => {
           console.log("data in areaMode", data);
-          const lineId = String(data[0]);
+          const lineId = String(data.nameGroup);
           console.log("lineId in areaMode", lineId);
           // arrayLinesId.push(lineId);
-          const lineData = data[1];
+          const lineData = data.array;
           const area = lines
             .append("path")
             .datum(lineData)
@@ -518,8 +501,8 @@ export default function LineChart(props: LineChartProps) {
       //рисуем линии
       enableddataGrouped.forEach((data, key) => {
         // console.log("data in drawLines", data);
-        const lineId = String(data[0]);
-        const lineData = data[1];
+        const lineId = String(data.nameGroup);
+        const lineData = data.array;
         const line = lines
           .append("g")
           .attr("id", `g-${lineId}`)
@@ -653,15 +636,19 @@ export default function LineChart(props: LineChartProps) {
         if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
       } else {
         //получаем множество всех отображаемых значений
-        const arrayOfValueEnableLines = getArrayOfValueEnableLines();
+        const arrayOfValueEnableLines = getArrayOfValueEnableLines(
+          data,
+          namesGroup,
+          lineEnable
+        );
         //находим максимальное значение на отображаемом интервале
-        const maxY = getMaximumInInterval(
+        const minMaxY = getMaximumInInterval(
           arrayOfValueEnableLines,
           currentSelection[0],
           currentSelection[1]
         );
         x.domain([currentSelection[0], currentSelection[1]]);
-        y.domain([0, maxY]);
+        y.domain([0, minMaxY[1]]);
         lines.select(".brush").call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
       }
       // Update axis and line position
@@ -684,16 +671,20 @@ export default function LineChart(props: LineChartProps) {
 
     svg.on("dblclick", function () {
       //получаем множество всех отображаемых значений
-      const arrayOfValueEnableLines = getArrayOfValueEnableLines();
+      const arrayOfValueEnableLines = getArrayOfValueEnableLines(
+        data,
+        namesGroup,
+        lineEnable
+      );
       //находим максимальное значение на отображаемом интервале
       currentSelection = [0, widthWithPadding - 10];
-      const maxY = getMaximumInInterval(arrayOfValueEnableLines);
+      const minMaxY = getMaximumInInterval(arrayOfValueEnableLines);
       x.domain(
         d3.extent(data, function (d) {
           return d.__timestamp;
         })
       );
-      y.domain([0, maxY]);
+      y.domain([0, minMaxY[1]]);
       xAxis.transition().duration(1000).call(xAxisSetting);
       yAxis.transition().duration(1000).call(yAxisSetting);
 

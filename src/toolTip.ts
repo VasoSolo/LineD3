@@ -1,6 +1,7 @@
 import * as d3 from "d3";
 
 export function createToolTip(canvas) {
+  // console.log("createToolTip");
   const toolTipBlock = canvas.append("g").attr("class", "toolTipBlock");
   toolTipBlock
     .selectAll("path")
@@ -51,7 +52,7 @@ export function moveToolTip(
       .attr("class", "toolTip")
       .attr("style", "fill: grey;")
       .attr("transform", (d, i) => `translate(5,${45 + i * 20})`)
-      .text((d) => `${d[0]} - ${d[1]}`);
+      .text((d) => `${d[0]}: ${d[1]}`);
 
     //заголовок тултипа в соотвествии с форматом отображения даты
     const headerText = formatDayMonthYear(X[i]);
