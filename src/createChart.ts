@@ -49,7 +49,7 @@ export function createChartWithForecast(element, myProps) {
     // lineEnable,
     // dataGrouped,
     metrica,
-    arrayForToolTip,
+    // arrayForToolTip,
     formatDayMonthYear,
     dataTime,
     // namesGroup,
@@ -213,7 +213,7 @@ export function createChartWithForecast(element, myProps) {
   lines.on("pointermove", () =>
     moveToolTip(
       event,
-      arrayForToolTip,
+      // arrayForToolTip,
       padding,
       formatDayMonthYear,
       X,
@@ -222,7 +222,8 @@ export function createChartWithForecast(element, myProps) {
       height,
       dataTime,
       lineEnable,
-      namesGroup
+      namesGroup,
+      true // yHatMode
     )
   );
   lines.on("pointerleave", hideToolTip);

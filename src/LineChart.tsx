@@ -186,7 +186,7 @@ export default function LineChart(props: LineChartProps) {
   const Y = new Set(Y_WithRepitition);
   // console.log("Y", Y);
 
-  let arrayForToolTip: string[][] = [];
+  // let arrayForToolTip: string[][] = [];
 
   // console.log("data", data);
   // console.log("dataTime", dataTime);
@@ -217,7 +217,7 @@ export default function LineChart(props: LineChartProps) {
     enableddataGrouped,
     lineEnable,
     metrica,
-    arrayForToolTip,
+    // arrayForToolTip,
     formatDayMonthYear,
     dataTime,
     namesGroup,
@@ -319,7 +319,7 @@ export default function LineChart(props: LineChartProps) {
     lines.on("pointermove", () =>
       moveToolTip(
         event,
-        arrayForToolTip,
+        // arrayForToolTip,
         padding,
         formatDayMonthYear,
         X,

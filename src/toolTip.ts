@@ -19,7 +19,7 @@ export function createToolTip(canvas) {
 
 export function moveToolTip(
   ev,
-  arrayForToolTip,
+  // arrayForToolTip,
   padding,
   formatDayMonthYear,
   X,
@@ -28,13 +28,17 @@ export function moveToolTip(
   height,
   dataTime,
   lineEnable,
-  namesGroup
+  namesGroup,
+  yHatMode = false
 ) {
+  let arrayForToolTip: string[][] = [];
   //получаем ближайшее значение на временной шкале к положению мыши
   const i = d3.bisectCenter(X, x.invert(d3.pointer(ev)[0] - padding.left));
 
   //собираем массив отображаемых в тултип данных
-  arrayForToolTip = getArrayForToolTip(X[i], dataTime, namesGroup, lineEnable);
+  arrayForToolTip = yHatMode
+    ? getArrayForToolTipWithYhat(X[i], dataTime, namesGroup, lineEnable)
+    : getArrayForToolTip(X[i], dataTime, namesGroup, lineEnable);
 
   //если есть, что отображать в тултипе
   if (arrayForToolTip.length > 0) {
@@ -121,6 +125,7 @@ function getMaxLengthOfToolTipText() {
 
 //сбор множества отметок для тултипа
 function getArrayForToolTip(point, dataTime, namesGroup, lineEnable) {
+  console.log("dataTime in getArrayForToolTip", dataTime);
   const array = [];
   dataTime.get(point)?.forEach((el) => {
     namesGroup.forEach((nameGroup) => {
@@ -128,6 +133,35 @@ function getArrayForToolTip(point, dataTime, namesGroup, lineEnable) {
         array.push([
           nameGroup.split(",")[1],
           dataTime.get(point)[0][nameGroup],
+        ]);
+      }
+    });
+  });
+  return array;
+}
+
+//сбор множества отметок для тултипа c yhat
+function getArrayForToolTipWithYhat(point, dataTime, namesGroup, lineEnable) {
+  console.log("dataTime in getArrayForToolTip", dataTime);
+  const array = [];
+  dataTime.get(point)?.forEach((el) => {
+    namesGroup.forEach((nameGroup) => {
+      // if (dataTime.get(point)[0][nameGroup] && lineEnable[nameGroup]) {
+      if (lineEnable[nameGroup]) {
+        const value = dataTime.get(point)[0][nameGroup];
+        const yHat =
+          Math.floor(dataTime.get(point)[0][`${nameGroup}__yhat`] * 100) / 100;
+        const yhat_lower =
+          Math.floor(dataTime.get(point)[0][`${nameGroup}__yhat_lower`] * 100) /
+          100;
+        const yhat_upper =
+          Math.floor(dataTime.get(point)[0][`${nameGroup}__yhat_upper`] * 100) /
+          100;
+        array.push([
+          nameGroup.split(",")[1],
+          `${
+            value ? value + ", " : " "
+          }y = ${yHat} (${yhat_lower}, ${yhat_upper})`,
         ]);
       }
     });
