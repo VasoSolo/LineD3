@@ -116,7 +116,7 @@ export function createChartWithForecast(element, myProps) {
   // );
   // console.log("Object.keys(dataGroupedObject)", Object.keys(dataGroupedObject));
 
-  console.log("lineEnable", lineEnable);
+  // console.log("lineEnable", lineEnable);
 
   if (element.select(".MyChart")) {
     element.select(".MyChart").remove();
@@ -200,11 +200,11 @@ export function createChartWithForecast(element, myProps) {
 
   // Создаём переменную lines: где находятся как линии, так и кисть
   const lines = svg.append("g").attr("clip-path", "url(#clip)");
-  // if (lines) {
-  //   console.log("lines ok", lines);
-  // } else {
-  //   console.log("lines not ok", lines);
-  // }
+  if (lines) {
+    console.log("lines ok!", lines);
+  } else {
+    console.log("lines not ok", lines);
+  }
 
   //   lines.on("pointerenter", createToolTip);
   //   lines.on("pointermove", moveToolTip);
@@ -351,6 +351,30 @@ export function createChartWithForecast(element, myProps) {
               return y(d[`__yhat_upper`]);
             })
         );
+
+      // lines
+      //   .append("g")
+      //   .attr("id", `g-${lineId}`)
+      //   .append("path")
+      //   .datum(item.array)
+      //   .attr("class", "line")
+      //   .attr("fill", "none")
+      //   .attr("id", `line-${lineId}`)
+      //   .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
+      //   .attr("stroke", color(lineId))
+      //   .attr("stroke-width", lineWidth)
+      //   .attr(
+      //     "d",
+      //     d3
+      //       .line()
+      //       .x(function (d) {
+      //         return x(d["__timestamp"]);
+      //       })
+      //       .y(function (d) {
+      //         // console.log("d in lines", lineId, d);
+      //         return y(d["value"]);
+      //       })
+      //   );
     });
 
     // namesGroup.forEach((nameGroup) => {
@@ -377,65 +401,65 @@ export function createChartWithForecast(element, myProps) {
     // });
 
     //закрашиваем площади
-    if (areaMode) {
-      console.log("areaMode");
-      enableddataGrouped.forEach((data, key) => {
-        console.log("data in areaMode", data);
-        const lineId = String(data[0]);
-        console.log("lineId in areaMode", lineId);
-        // arrayLinesId.push(lineId);
-        const lineData = data[1];
-        const area = lines
-          .append("path")
-          .datum(lineData)
-          .attr("class", "area")
-          .attr("fill", "none")
-          .attr("id", `area-${lineId}`)
-          .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
-          .attr("stroke-width", 0)
-          .attr(
-            "d",
-            d3
-              .area()
-              .x(function (d) {
-                return x(d["__timestamp"]);
-              })
-              .y0(height)
-              .y1(function (d) {
-                return y(d["value"]);
-              })
-          );
+    // if (areaMode) {
+    //   console.log("areaMode");
+    //   enableddataGrouped.forEach((data, key) => {
+    //     console.log("data in areaMode", data);
+    //     const lineId = String(data[0]);
+    //     console.log("lineId in areaMode", lineId);
+    //     // arrayLinesId.push(lineId);
+    //     const lineData = data[1];
+    //     const area = lines
+    //       .append("path")
+    //       .datum(lineData)
+    //       .attr("class", "area")
+    //       .attr("fill", "none")
+    //       .attr("id", `area-${lineId}`)
+    //       .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
+    //       .attr("stroke-width", 0)
+    //       .attr(
+    //         "d",
+    //         d3
+    //           .area()
+    //           .x(function (d) {
+    //             return x(d["__timestamp"]);
+    //           })
+    //           .y0(height)
+    //           .y1(function (d) {
+    //             return y(d["value"]);
+    //           })
+    //       );
 
-        //fill area
-        const gradId = lineId.replace(/\s|\(|\)|,/gm, "");
+    //fill area
+    // const gradId = lineId.replace(/\s|\(|\)|,/gm, "");
 
-        console.log("gradId", gradId);
-        var lg = lines
-          .append("defs")
-          .append("linearGradient")
-          .attr("id", `mygrad_${gradId}`) //id of the gradient
-          .attr("x1", "0%")
-          .attr("x2", "0%")
-          .attr("y1", "0%")
-          .attr("y2", "100%"); //since its a vertical linear gradient
-        lg.append("stop")
-          .attr("offset", "0%")
-          .style("stop-color", color(lineId))
-          // .style("stop-color", "green")
-          .style("stop-opacity", 1);
+    // console.log("gradId", gradId);
+    // var lg = lines
+    //   .append("defs")
+    //   .append("linearGradient")
+    //   .attr("id", `mygrad_${gradId}`) //id of the gradient
+    //   .attr("x1", "0%")
+    //   .attr("x2", "0%")
+    //   .attr("y1", "0%")
+    //   .attr("y2", "100%"); //since its a vertical linear gradient
+    // lg.append("stop")
+    //   .attr("offset", "0%")
+    //   .style("stop-color", color(lineId))
+    //   // .style("stop-color", "green")
+    //   .style("stop-opacity", 1);
 
-        lg.append("stop").attr("offset", "100%").style("stop-color", "white");
-        // .style("stop-opacity", areaOpacity / 100);
+    // lg.append("stop").attr("offset", "100%").style("stop-color", "white");
+    // // .style("stop-opacity", areaOpacity / 100);
 
-        if (gradientArea) {
-          area.attr("fill", `url(#mygrad_${gradId})`);
-        } else {
-          area
-            .attr("fill", color(lineId))
-            .attr("fill-opacity", areaOpacity / 100);
-        }
-      });
-    }
+    // if (gradientArea) {
+    //   area.attr("fill", `url(#mygrad_${gradId})`);
+    // } else {
+    //   area
+    //     .attr("fill", color(lineId))
+    //     .attr("fill-opacity", areaOpacity / 100);
+    // }
+    // });
+    // }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -486,5 +510,168 @@ export function createChartWithForecast(element, myProps) {
     //       .attr("fill", color(lineId));
     //   }
     // });
+
+    function lineRender() {
+      console.log("lineOrAreaRender");
+      lines
+        .selectAll(".area")
+        .transition()
+        .duration(1000)
+        .attr(
+          "d",
+          d3
+            .area()
+            .x(function (d) {
+              return x(d["__timestamp"]);
+            })
+            .y0(height)
+            .y1(function (d) {
+              return y(d["value"]);
+            })
+        );
+
+      // const area = lines
+      //   .append("path")
+      //   .datum(lineData)
+      //   .attr("class", "area")
+      //   .attr("fill", "none")
+      //   .attr("id", `area-${lineId}`)
+      //   .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
+      //   .attr("stroke-width", 0)
+      //   .attr(
+      //     "d",
+      //     d3
+      //       .area()
+      //       .x(function (d) {
+      //         return x(d["__timestamp"]);
+      //       })
+      //       .y0(height)
+      //       .y1(function (d) {
+      //         return y(d["value"]);
+      //       })
+      //   );
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////ZOOM
+
+    // Add brushing
+    const brush = d3
+      .brushX() // Add the brush feature using the d3.brush function
+      .extent([
+        [0, 0],
+        [widthWithPadding, height - padding.bottom],
+      ]) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+      .on("end", brushedChart); // Each time the brush selection changes, trigger the 'updateChart' function
+
+    // Add the brushing
+    lines
+      .append("g")
+      .attr("class", "brush")
+      .attr("id", "brush")
+      .attr("transform", `translate(${padding.left},0)`)
+      .call(brush);
+
+    // A function that set idleTimeOut to null
+    let idleTimeout;
+    function idled() {
+      idleTimeout = null;
+    }
+
+    function brushedChart(event, d) {
+      console.log("brushedChart");
+      // What are the selected boundaries?
+
+      // let extent = event.selection;
+      if (event.selection) {
+        currentSelection = [
+          x.invert(event.selection[0]),
+          x.invert(event.selection[1]),
+        ];
+
+        //currentSelection[0] =  x.invert(event.selection[0])
+      }
+
+      if (!event.selection) {
+        if (!idleTimeout) return (idleTimeout = setTimeout(idled, 350)); // This allows to wait a little bit
+      } else {
+        //получаем множество всех отображаемых значений
+        const arrayOfValueEnableLines = getArrayOfValueEnableLines(
+          data,
+          namesGroup,
+          lineEnable
+        );
+        //находим максимальное значение на отображаемом интервале
+        const minMaxY = getMaximumInInterval(
+          arrayOfValueEnableLines,
+          currentSelection[0],
+          currentSelection[1]
+        );
+        x.domain([currentSelection[0], currentSelection[1]]);
+        y.domain([0, minMaxY[1]]);
+        lines.select(".brush").call(brush.move, null); // This remove the grey brush area as soon as the selection has been done
+      }
+      // Update axis and line position
+      xAxis.transition().duration(1000).call(xAxisSetting);
+      yAxis.transition().duration(1000).call(yAxisSetting);
+      renderTick();
+      lineRender();
+      lines
+        .selectAll(".marker")
+        .transition()
+        .duration(1000)
+        .attr(
+          "transform",
+          (d) =>
+            `translate(${x(d["__timestamp"]) + padding.left}, ${
+              y(d["value"]) - padding.bottom
+            })`
+        );
+    }
+
+    svg.on("dblclick", function () {
+      //получаем множество всех отображаемых значений
+      const arrayOfValueEnableLines = getArrayOfValueEnableLines(
+        data,
+        namesGroup,
+        lineEnable
+      );
+      //находим максимальное значение на отображаемом интервале
+      currentSelection = [0, widthWithPadding - 10];
+      const minMaxY = getMaximumInInterval(arrayOfValueEnableLines);
+      x.domain(
+        d3.extent(data, function (d) {
+          return d.__timestamp;
+        })
+      );
+      y.domain([0, minMaxY[1]]);
+      xAxis.transition().duration(1000).call(xAxisSetting);
+      yAxis.transition().duration(1000).call(yAxisSetting);
+
+      renderTick();
+
+      lineRender();
+
+      lines
+        .selectAll(".marker")
+        .transition()
+        .duration(1000)
+        .attr(
+          "transform",
+          (d) =>
+            `translate(${x(d["__timestamp"]) + padding.left}, ${
+              y(d["value"]) - padding.bottom
+            })`
+        );
+    });
   }
 }

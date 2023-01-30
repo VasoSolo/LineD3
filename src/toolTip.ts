@@ -125,7 +125,7 @@ function getMaxLengthOfToolTipText() {
 
 //сбор множества отметок для тултипа
 function getArrayForToolTip(point, dataTime, namesGroup, lineEnable) {
-  console.log("dataTime in getArrayForToolTip", dataTime);
+  // console.log("dataTime in getArrayForToolTip", dataTime);
   const array = [];
   dataTime.get(point)?.forEach((el) => {
     namesGroup.forEach((nameGroup) => {
@@ -142,7 +142,7 @@ function getArrayForToolTip(point, dataTime, namesGroup, lineEnable) {
 
 //сбор множества отметок для тултипа c yhat
 function getArrayForToolTipWithYhat(point, dataTime, namesGroup, lineEnable) {
-  console.log("dataTime in getArrayForToolTip", dataTime);
+  // console.log("dataTime in getArrayForToolTip", dataTime);
   const array = [];
   dataTime.get(point)?.forEach((el) => {
     namesGroup.forEach((nameGroup) => {
