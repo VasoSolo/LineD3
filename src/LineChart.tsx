@@ -43,7 +43,7 @@ export default function LineChart(props: LineChartProps) {
     data,
     height,
     width,
-    groupby,
+    // groupby,
     metrics,
     colorScheme,
     markerType,
@@ -66,11 +66,11 @@ export default function LineChart(props: LineChartProps) {
     marginLeft,
     marginRight,
     forecastEnabled,
-    forecastInterval,
-    forecastPeriods,
-    forecastSeasonalityDaily,
-    forecastSeasonalityWeekly,
-    forecastSeasonalityYearly,
+    // forecastInterval,
+    // forecastPeriods,
+    // forecastSeasonalityDaily,
+    // forecastSeasonalityWeekly,
+    // forecastSeasonalityYearly,
   } = props;
   //костыль, чтобы не появлялись скроллы
   height -= 10;
@@ -351,6 +351,7 @@ export default function LineChart(props: LineChartProps) {
         legendHorizontPosition,
         legendVerticalPosition,
       };
+
       const legendClasses = legend(legendProps);
       // console.log(legendClasses);
 
@@ -503,7 +504,7 @@ export default function LineChart(props: LineChartProps) {
         // console.log("data in drawLines", data);
         const lineId = String(data.nameGroup);
         const lineData = data.array;
-        const line = lines
+        lines
           .append("g")
           .attr("id", `g-${lineId}`)
           .append("path")
@@ -667,6 +668,7 @@ export default function LineChart(props: LineChartProps) {
               y(d["value"]) - padding.bottom
             })`
         );
+      return true;
     }
 
     svg.on("dblclick", function () {

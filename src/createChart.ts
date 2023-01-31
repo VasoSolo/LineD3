@@ -133,7 +133,7 @@ export function createChartWithForecast(element, myProps) {
     .scaleTime()
     .domain(
       d3.extent(data, function (d) {
-        return d.__timestamp;
+        return +d["__timestamp"];
       })
     )
     .range([0, widthWithPadding - 10]);
@@ -200,11 +200,11 @@ export function createChartWithForecast(element, myProps) {
 
   // Создаём переменную lines: где находятся как линии, так и кисть
   const lines = svg.append("g").attr("clip-path", "url(#clip)");
-  if (lines) {
-    console.log("lines ok!", lines);
-  } else {
-    console.log("lines not ok", lines);
-  }
+  // if (lines) {
+  //   console.log("lines ok!", lines);
+  // } else {
+  //   console.log("lines not ok", lines);
+  // }
 
   //   lines.on("pointerenter", createToolTip);
   //   lines.on("pointermove", moveToolTip);
@@ -314,7 +314,7 @@ export function createChartWithForecast(element, myProps) {
       currentSelection[1]
     );
     // y.domain([minMaxY[0] < 0 ? minMaxY[0] : 0, minMaxY[1]]);
-    // y.domain([minMaxY[0], minMaxY[1]]);
+    y.domain([minMaxY[0], minMaxY[1]]);
 
     yAxis.transition().duration(1000).call(yAxisSetting);
     renderTick();
@@ -330,6 +330,7 @@ export function createChartWithForecast(element, myProps) {
     // let arrayLinesId: string[] = [];
 
     enableddataGrouped.forEach((item) => {
+      //corridor __yhat_lower and __yhat_upper
       lines
         .append("path")
         .datum(item.array)
@@ -352,29 +353,26 @@ export function createChartWithForecast(element, myProps) {
             })
         );
 
-      // lines
-      //   .append("g")
-      //   .attr("id", `g-${lineId}`)
-      //   .append("path")
-      //   .datum(item.array)
-      //   .attr("class", "line")
-      //   .attr("fill", "none")
-      //   .attr("id", `line-${lineId}`)
-      //   .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
-      //   .attr("stroke", color(lineId))
-      //   .attr("stroke-width", lineWidth)
-      //   .attr(
-      //     "d",
-      //     d3
-      //       .line()
-      //       .x(function (d) {
-      //         return x(d["__timestamp"]);
-      //       })
-      //       .y(function (d) {
-      //         // console.log("d in lines", lineId, d);
-      //         return y(d["value"]);
-      //       })
-      //   );
+      //lines __yhat
+      lines
+        .append("path")
+        .datum(item.array)
+        .attr("class", "line_yhat")
+        .attr("fill", "none")
+        .attr("id", `line_yhat-${item.nameGroup}`)
+        .attr("stroke", color(item.nameGroup))
+        .attr("stroke-width", lineWidth)
+        .attr(
+          "d",
+          d3
+            .line()
+            .x(function (d) {
+              return x(d["__timestamp"]);
+            })
+            .y(function (d) {
+              return y(d["__yhat"]);
+            })
+        );
     });
 
     // namesGroup.forEach((nameGroup) => {
@@ -514,7 +512,7 @@ export function createChartWithForecast(element, myProps) {
     function lineRender() {
       console.log("lineOrAreaRender");
       lines
-        .selectAll(".area")
+        .selectAll(".corridor")
         .transition()
         .duration(1000)
         .attr(
@@ -524,32 +522,30 @@ export function createChartWithForecast(element, myProps) {
             .x(function (d) {
               return x(d["__timestamp"]);
             })
-            .y0(height)
+            .y0(function (d) {
+              return y(d[`__yhat_lower`]);
+            })
             .y1(function (d) {
-              return y(d["value"]);
+              return y(d[`__yhat_upper`]);
             })
         );
 
-      // const area = lines
-      //   .append("path")
-      //   .datum(lineData)
-      //   .attr("class", "area")
-      //   .attr("fill", "none")
-      //   .attr("id", `area-${lineId}`)
-      //   .attr("transform", `translate(${padding.left}, ${-padding.bottom})`)
-      //   .attr("stroke-width", 0)
-      //   .attr(
-      //     "d",
-      //     d3
-      //       .area()
-      //       .x(function (d) {
-      //         return x(d["__timestamp"]);
-      //       })
-      //       .y0(height)
-      //       .y1(function (d) {
-      //         return y(d["value"]);
-      //       })
-      //   );
+      //lines __yhat
+      lines
+        .selectAll(".line_yhat")
+        .transition()
+        .duration(1000)
+        .attr(
+          "d",
+          d3
+            .line()
+            .x(function (d) {
+              return x(d["__timestamp"]);
+            })
+            .y(function (d) {
+              return y(d["__yhat"]);
+            })
+        );
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
